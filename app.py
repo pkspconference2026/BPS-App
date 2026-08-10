@@ -29,7 +29,7 @@ app.config['SECRET_KEY'] = 'bps-secret-kkm-2026'
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.0.1'
+APP_VERSION = '1.1.0'
 
 # ── Lokasi Output (Dropbox / config / local) ──
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
