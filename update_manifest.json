@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "change_log": "Versi asal dengan auto-update.",
+  "version": "1.0.1",
+  "change_log": "v1.0.1: Fix baca UPDATE_URL dari config.txt + baiki syntax error pada /check_update.",
   "files": [
     {
       "path": "app.py",
