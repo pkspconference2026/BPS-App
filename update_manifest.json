@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "change_log": "Versi asal dengan auto-update.",
+  "files": [
+    {
+      "path": "app.py",
+      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/app.py"
+    },
+    {
+      "path": "templates/index.html",
+      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/templates/index.html"
+    },
+    {
+      "path": "update_manifest.json",
+      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/update_manifest.json"
+    }
+  ]
+}

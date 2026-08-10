@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<title>Laporan BPS — Cetak/PDF</title>
+<style>
+body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; padding: 20px; }
+.no-print { display: block; text-align: center; margin: 20px 0; }
+.no-print button { padding: 10px 24px; font-size: 14px; background: #1a237e; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.no-print button:hover { background: #283593; }
+@media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="no-print">
+    <p style="margin-bottom:10px;color:#555;">📄 Laporan sedia untuk dicetak atau disimpan sebagai PDF.</p>
+    <button onclick="window.print()">🖨️ Cetak / Simpan sebagai PDF</button>
+    <p style="margin-top:6px;font-size:12px;color:#888;">Atau tekan Ctrl+P → pilih "Save as PDF"</p>
+    <hr style="margin:20px 0;">
+</div>
+{{ html_content|safe }}
+</body>
+</html>

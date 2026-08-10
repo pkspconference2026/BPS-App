@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPS Report Generator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; padding: 20px; }
+.container { max-width: 1000px; margin: 0 auto; }
+.header { background: #1a237e; color: #fff; padding: 20px 30px; border-radius: 10px 10px 0 0; text-align: center; }
+.header h1 { font-size: 22px; margin-bottom: 4px; }
+.header p { font-size: 13px; opacity: .85; }
+.card { background: #fff; border-radius: 0 0 10px 10px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.section { margin-bottom: 28px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+.section h2 { background: #e8eaf6; padding: 10px 16px; font-size: 15px; margin: 0; border-bottom: 1px solid #c5cae9; }
+.section-body { padding: 16px; }
+.form-row { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 180px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 3px; }
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; font-family: inherit;
+    transition: border-color .2s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #1a237e; outline: none; box-shadow: 0 0 0 2px rgba(26,35,126,0.12); }
+.form-group textarea { min-height: 70px; resize: vertical; }
+.form-group .hint { font-size: 11px; color: #888; margin-top: 2px; }
+.highlight { background: #fff8e1; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #e65100; }
+table.ahli { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+table.ahli th { background: #e8eaf6; padding: 6px 4px; border: 1px solid #c5cae9; font-size: 11px; }
+table.ahli td { padding: 4px; border: 1px solid #ddd; }
+table.ahli input, table.ahli select { width: 100%; padding: 4px 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; }
+table.ahli .btn-remove { background: #ef5350; color: #fff; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer; font-size: 11px; }
+.btn-add { background: #43a047; color: #fff; border: none; border-radius: 5px; padding: 6px 14px; cursor: pointer; font-size: 12px; }
+.btn-add:hover { background: #388e3c; }
+.btn-remove:hover { background: #d32f2f; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; padding: 20px; background: #f5f5f5; border-radius: 8px; justify-content: center; }
+.btn { padding: 12px 28px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; min-width: 140px; }
+.btn-primary { background: #1a237e; color: #fff; }
+.btn-primary:hover { background: #283593; }
+.btn-success { background: #2e7d32; color: #fff; }
+.btn-success:hover { background: #388e3c; }
+.btn-info { background: #1565c0; color: #fff; }
+.btn-info:hover { background: #1976d2; }
+.btn-warning { background: #e65100; color: #fff; }
+.btn-warning:hover { background: #ef6c00; }
+.btn-sm { padding: 6px 16px; font-size: 12px; min-width: auto; }
+.status { margin-top: 12px; padding: 12px 16px; border-radius: 6px; display: none; }
+.status.ok { display: block; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.status.err { display: block; background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+.status.info { display: block; background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.auto-total { background: #e8f5e9; padding: 4px 10px; border-radius: 4px; font-weight: 700; }
+@media(max-width:760px){ .form-row { flex-direction: column; } .form-group { min-width: 100%; } }
+.draft-list { margin-top: 16px; }
+.draft-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 4px; }
+.draft-item button { background: #1565c0; color: #fff; border: none; border-radius: 3px; padding: 4px 10px; cursor: pointer; font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📋 LAPORAN PENILAIAN BIOPSIKOSOSIAL</h1>
+    <p>Pegawai Kerja Sosial Perubatan-Hospital Hulu Terengani-KKM</p>
+</div>
+<div class="card">
+<div id="outputBanner" style="background:#e8f5e9;padding:10px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    {% if is_dropbox %}
+        📂 <b>Laporan disimpan ke Dropbox</b>
+    {% else %}
+        📂 <b>Laporan disimpan secara tempatan</b>
+    {% endif %}
+    <code style="background:#f5f5f5;padding:2px 8px;border-radius:4px;font-size:11px;word-break:break-all;">{{ output_path }}</code>
+    <span style="margin-left:auto;font-size:11px;color:#666;">(Tukar di config.txt)</span>
+</div>
+<form id="bpsForm" method="POST" action="/generate" onsubmit="return validateForm()">
+
+<!-- ═══ 1. MAKLUMAT PESAKIT ═══ -->
+<div class="section">
+<h2>1. MAKLUMAT PESAKIT</h2>
+<div class="section-body">
+    <div class="form-row">
+        <div class="form-group"><label>No. Rujukan Fail</label><input name="rujukan_fail" placeholder="cth: BPS/07/2026"></div>
+        <div class="form-group"><label>Tarikh Pendaftaran</label><input name="tarikh_daftar" value="{{ today }}"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Nama Pesakit</label><input name="nama" required></div>
+        <div class="form-group"><label>No. Kad Pengenalan</label><input name="ic" placeholder="810621-XX-XXXX"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group" style="flex:2"><label>Alamat</label><textarea name="alamat" rows="2"></textarea></div>
+        <div class="form-group"><label>No. Telefon</label><input name="telefon"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Tarikh Lahir</label><input name="tarikh_lahir" placeholder="dd/mm/yyyy"></div>
+        <div class="form-group"><label>Umur</label><input name="umur" type="number"></div>
+        <div class="form-group"><label>Tempat Lahir</label><input name="tempat_lahir"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Jantina</label><select name="jantina">{% for j in jantina %}<option value="{{ j }}">{{ j }}</option>{% endfor %}</select></div>
+        <div class="form-group"><label>Bangsa</label><select name="bangsa">{% for b in bangsa %}<option value="{{ b }}">{{ b }}</option>{% endfor %}</select></div>
+        <div class="form-group"><label>Agama</label><select name="agama">{% for a in agama %}<option value="{{ a }}">{{ a }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Kewarganegaraan</label><select name="kewarganegaraan">{% for k in kewarganegaraan %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select></div>
+        <div class="form-group"><label>Status Perkahwinan</label><select name="status_kahwin">{% for s in status_kahwin %}<option value="{{ s }}">{{ s }}</option>{% endfor %}</select></div>
+        <div class="form-group"><label>Status Pendidikan</label><select name="status_pendidikan">{% for p in status_pendidikan %}<option value="{{ p }}">{{ p }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Pekerjaan</label><input name="pekerjaan" placeholder="cth: Cleaner di Politeknik"></div>
+        <div class="form-group"><label>Diagnosa</label><input name="diagnosa" placeholder="cth: DM"></div>
+        <div class="form-group"><label>Kategori Kes</label><select name="kategori_kes"><option value="">— Pilih —</option><option>BANTUAN PERALATAN</option><option>BANTUAN KEWANGAN</option><option>KESAN WARIS</option><option>PENEMPATAN INSTITUSI</option><option>TERAPI SOKONGAN</option><option>LAIN-LAIN</option></select></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Tarikh Masuk Hospital</label><input name="tarikh_masuk"></div>
+        <div class="form-group"><label>Tarikh Keluar Hospital</label><input name="tarikh_keluar"></div>
+    </div>
+</div>
+</div>
+
+<!-- ═══ 2. PENDAPATAN & PERBELANJAAN ═══ -->
+<div class="section">
+<h2>2. PENDAPATAN DAN PERBELANJAAN DIRI/KELUARGA</h2>
+<div class="section-body">
+    <h3 style="font-size:13px; margin-bottom:8px;">2.1 Pendapatan Sebulan</h3>
+    <div class="form-row">
+        <div class="form-group"><label>i) Pendapatan Isi Rumah</label><input name="pendapatan_isi_rumah" type="number" min="0" oninput="kiraPendapatan()" class="pemasukan"></div>
+        <div class="form-group"><label>ii) Sumbangan Ahli Keluarga</label><input name="sumbangan_keluarga" type="number" min="0" oninput="kiraPendapatan()" class="pemasukan"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>iii) Bantuan Tetap</label><input name="bantuan_tetap" type="number" min="0" oninput="kiraPendapatan()" class="pemasukan"></div>
+        <div class="form-group"><label>iv) JKM-Penjaga</label><input name="bantuan_jkm_penjaga" type="number" min="0" oninput="kiraPendapatan()" class="pemasukan"></div>
+        <div class="form-group"><label>MAIDAM</label><input name="bantuan_maidam" type="number" min="0" oninput="kiraPendapatan()" class="pemasukan"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label><strong>JUMLAH PENDAPATAN</strong></label><input name="jumlah_pendapatan" readonly class="auto-total" style="font-weight:700;"></div>
+    </div>
+
+    <h3 style="font-size:13px; margin:14px 0 8px;">2.2 Perbelanjaan Sebulan (Anggaran)</h3>
+    <div class="form-row">
+        <div class="form-group"><label>i) Makanan</label><input name="belanja_makanan" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+        <div class="form-group"><label>ii) Ansuran/Sewa Rumah</label><input name="belanja_sewa" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+        <div class="form-group"><label>iii) Utiliti</label><input name="belanja_utiliti" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>iv) Pengangkutan</label><input name="belanja_pengangkutan" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+        <div class="form-group"><label>v) Pendidikan</label><input name="belanja_pendidikan" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+        <div class="form-group"><label>vi) Kos Perubatan</label><input name="belanja_perubatan" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>vii) Pakaian</label><input name="belanja_pakaian" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+        <div class="form-group"><label>viii) Penjagaan Anak</label><input name="belanja_penjagaan_anak" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+        <div class="form-group"><label>ix) Pinjaman Peribadi</label><input name="belanja_pinjaman" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>x) Lain-lain</label><input name="belanja_lain" type="number" min="0" oninput="kiraPerbelanjaan()" class="belanja"></div>
+        <div class="form-group"><label>Nyatakan (lain-lain)</label><input name="belanja_lain_text" placeholder="cth: kereta & motor"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label><strong>JUMLAH PERBELANJAAN</strong></label><input name="jumlah_perbelanjaan" readonly class="auto-total" style="font-weight:700;"></div>
+    </div>
+
+    <h3 style="font-size:13px; margin:14px 0 8px;">2.3 Caruman Bulanan</h3>
+    <div class="form-row">
+        <div class="form-group"><label>i) KWSP</label><input name="caruman_kwsp" type="number" min="0" oninput="kiraCaruman()" class="caruman"></div>
+        <div class="form-group"><label>ii) PERKESO</label><input name="caruman_perkeso" type="number" min="0" oninput="kiraCaruman()" class="caruman"></div>
+        <div class="form-group"><label>JUMLAH</label><input name="jumlah_caruman" readonly class="auto-total"></div>
+    </div>
+
+    <h3 style="font-size:13px; margin:14px 0 8px;">2.4 Tabungan Bulanan</h3>
+    <div class="form-row">
+        <div class="form-group"><label>i) Insuran</label><input name="tabungan_insuran" type="number" min="0" oninput="kiraTabungan()" class="tabungan"></div>
+        <div class="form-group"><label>ii) Koperasi/ASN/ASB/Tabung Haji</label><input name="tabungan_asm" type="number" min="0" oninput="kiraTabungan()" class="tabungan"></div>
+        <div class="form-group"><label>iii) Lain-lain</label><input name="tabungan_lain" type="number" min="0" oninput="kiraTabungan()" class="tabungan"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>JUMLAH TABUNGAN</label><input name="jumlah_tabungan" readonly class="auto-total"></div>
+    </div>
+
+    <h3 style="font-size:13px; margin:14px 0 8px;">2.5 Harta (Nyatakan Nilai)</h3>
+    <div class="form-row">
+        <div class="form-group"><label>i) Wang Simpanan/Saham</label><input name="harta_simpanan" type="number" min="0" oninput="kiraHarta()" class="harta"></div>
+        <div class="form-group"><label>ii) Rumah</label><input name="harta_rumah" type="number" min="0" oninput="kiraHarta()" class="harta"></div>
+        <div class="form-group"><label>iii) Tanah</label><input name="harta_tanah" type="number" min="0" oninput="kiraHarta()" class="harta"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>iv) Kenderaan</label><input name="harta_kenderaan" type="number" min="0" oninput="kiraHarta()" class="harta"></div>
+        <div class="form-group"><label>Jenis Kenderaan</label><input name="harta_kenderaan_jenis" placeholder="cth: Proton Saga"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>v) Lain-lain</label><input name="harta_lain" type="number" min="0" oninput="kiraHarta()" class="harta"></div>
+        <div class="form-group"><label>Nyatakan (lain)</label><input name="harta_lain_text"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>JUMLAH HARTA</label><input name="jumlah_harta" readonly class="auto-total"></div>
+    </div>
+
+    <h3 style="font-size:13px; margin:14px 0 8px;">2.6 Baki Pendapatan Bulanan</h3>
+    <div class="form-row">
+        <div class="form-group"><label>i) Jumlah Pendapatan</label><input name="baki_jumlah_pendapatan" readonly class="auto-total"></div>
+        <div class="form-group"><label>ii) Jumlah Perbelanjaan</label><input name="baki_jumlah_perbelanjaan" readonly class="auto-total"></div>
+        <div class="form-group"><label><strong>BAKI BERSIH</strong></label><input name="baki_bersih" readonly style="font-weight:700;background:#fff3e0;"></div>
+    </div>
+</div>
+</div>
+
+<!-- ═══ 3. KEADAAN TEMPAT TINGGAL ═══ -->
+<div class="section">
+<h2>3. KEADAAN TEMPAT TINGGAL</h2>
+<div class="section-body">
+    <div class="form-row">
+        <div class="form-group"><label>Jenis Kediaman</label>
+            <select name="jenis_kediaman" onchange="document.getElementById('kediaman_lain_wrapper').style.display=this.value==='Lain-lain'?'block':'none'">
+                {% for jk in jenis_kediaman %}<option value="{{ jk }}">{{ jk }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group" id="kediaman_lain_wrapper" style="display:none"><label>Nyatakan</label><input name="jenis_kediaman_lain"></div>
+        <div class="form-group"><label>Status Kediaman</label>
+            <select name="status_kediaman">{% for sk in status_kediaman %}<option value="{{ sk }}">{{ sk }}</option>{% endfor %}</select>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Utiliti & Kemudahan (pilih)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;">
+            {% for u in utiliti %}<label style="font-weight:400;font-size:13px;"><input type="checkbox" name="utiliti" value="{{ u }}"> {{ u }}</label>{% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Kemudahan Lain (nyatakan)</label><input name="kemudahan_lain"></div>
+    </div>
+</div>
+</div>
+
+<!-- ═══ 4. BUTIR KELUARGA ═══ -->
+<div class="section">
+<h2>4. BUTIR-BUTIR KELUARGA</h2>
+<div class="section-body">
+    <h3 style="font-size:13px; margin-bottom:8px;">4.1 Keluarga Yang Tinggal Serumah</h3>
+    <table class="ahli" id="tableSerumah">
+        <thead><tr>
+            <th style="width:30px">Bil</th><th>Nama</th><th style="width:90px">Jantina/Umur</th>
+            <th style="width:100px">Status Kahwin</th><th style="width:110px">Pertalian</th>
+            <th>Pekerjaan/Sekolah</th><th style="width:90px">Pendapatan (RM)</th><th style="width:40px"></th>
+        </tr></thead>
+        <tbody>
+            <!-- rows inserted by JS -->
+        </tbody>
+    </table>
+    <button type="button" class="btn-add" onclick="addRow('Serumah')">+ Tambah Ahli</button>
+
+    <h3 style="font-size:13px; margin:16px 0 8px;">4.2 Keluarga Yang Tinggal Berasingan</h3>
+    <table class="ahli" id="tableBerasingan">
+        <thead><tr>
+            <th style="width:30px">Bil</th><th>Nama</th><th style="width:90px">Jantina/Umur</th>
+            <th style="width:100px">Status Kahwin</th><th style="width:110px">Pertalian</th>
+            <th>Pekerjaan/Sekolah</th><th style="width:90px">Pendapatan (RM)</th><th style="width:40px"></th>
+        </tr></thead>
+        <tbody></tbody>
+    </table>
+    <button type="button" class="btn-add" onclick="addRow('Berasingan')">+ Tambah Ahli</button>
+    <div class="form-row" style="margin-top:8px;">
+        <div class="form-group"><label>Catatan Tanggungan / Status Kesihatan</label><textarea name="catatan_tanggungan" rows="2"></textarea></div>
+    </div>
+    <input type="hidden" name="keluarga_serumah_json" id="keluarga_serumah_json">
+    <input type="hidden" name="keluarga_berasingan_json" id="keluarga_berasingan_json">
+</div>
+</div>
+
+<!-- ═══ 5. SEJARAH PERUBATAN ═══ -->
+<div class="section">
+<h2>5. SEJARAH PERUBATAN PESAKIT</h2>
+<div class="section-body">
+    <p style="font-size:12px;color:#666;margin-bottom:6px;">(Kecacatan, masalah kesihatan, masalah kesihatan mental, penyalahgunaan dadah/alkohol)</p>
+    <div class="form-group"><textarea name="sejarah_perubatan" rows="3" placeholder="Taip sejarah perubatan pesakit di sini..."></textarea></div>
+</div>
+</div>
+
+<!-- ═══ 6. ASPEK SOSIAL ═══ -->
+<div class="section">
+<h2>6. MAKLUMAT TAMBAHAN ASPEK SOSIAL</h2>
+<div class="section-body">
+    <div class="form-group"><label>a) Tingkah laku di rumah dan dalam komuniti</label><textarea name="tingkah_laku" rows="2"></textarea></div>
+    <div class="form-group"><label>b) Ahli keluarga yang menghidap penyakit mental</label><textarea name="penyakit_mental_keluarga" rows="2"></textarea></div>
+    <div class="form-group"><label>c) Sistem Sokongan Keluarga</label><textarea name="sokongan_keluarga" rows="2" placeholder="Masalah penjagaan, hubungan, penerimaan, ekspektasi keluarga"></textarea></div>
+    <div class="form-group"><label>d) Pengalaman bekerja</label><textarea name="pengalaman_kerja" rows="2"></textarea></div>
+    <div class="form-group"><label>e) Pendidikan</label><textarea name="pendidikan_pesakit" rows="2"></textarea></div>
+    <div class="form-group"><label>f) Perkahwinan</label><textarea name="perkahwinan_pesakit" rows="2"></textarea></div>
+    <div class="form-group"><label>g) Rekod jenayah</label><textarea name="rekod_jenayah" rows="2"></textarea></div>
+</div>
+</div>
+
+<!-- ═══ 7. ULASAN PKSP ═══ -->
+<div class="section">
+<h2>7. ULASAN PEGAWAI KERJA SOSIAL PERUBATAN</h2>
+<div class="section-body">
+    <h3 style="font-size:13px; margin-bottom:8px;">7.1 Kesan Penyakit Terhadap Kefungsian Sosial Pesakit/Keluarga</h3>
+    <div class="form-group"><label>a) Fizikal</label><textarea name="kesan_fizikal" rows="2"></textarea></div>
+    <div class="form-group"><label>b) Ekonomi</label><textarea name="kesan_ekonomi" rows="2"></textarea></div>
+    <div class="form-group"><label>c) Emosi</label><textarea name="kesan_emosi" rows="2"></textarea></div>
+    <div class="form-group"><label>d) Mental</label><textarea name="kesan_mental" rows="2"></textarea></div>
+    <div class="form-group"><label>e) Perhubungan Sosial</label><textarea name="kesan_perhubungan" rows="2"></textarea></div>
+
+    <h3 style="font-size:13px; margin:14px 0 8px;">7.2 Bantuan Yang Disyorkan</h3>
+    <h4 style="font-size:12px; margin:8px 0 4px;color:#444;">a) Bantuan Praktik</h4>
+    <p style="font-size:12px;font-weight:600;margin:6px 0 2px;">i) Bantuan Kewangan (Peralatan Perubatan/Ubat/Rawatan)</p>
+    <div class="form-row">
+        <div class="form-group"><label>Jenis peralatan/ubat/rawatan</label><input name="bantuan_kewangan_jenis"></div>
+        <div class="form-group"><label>Kos</label><input name="bantuan_kewangan_kos" type="number"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Jumlah dibayar pesakit</label><input name="bantuan_kewangan_bayar" value="Tiada"></div>
+        <div class="form-group"><label>Jumlah bantuan dipohon</label><input name="bantuan_kewangan_dipohon" type="number"></div>
+        <div class="form-group"><label>Jangka masa</label><input name="bantuan_kewangan_jangka"></div>
+    </div>
+
+    <p style="font-size:12px;font-weight:600;margin:10px 0 2px;">ii) Kesan Waris</p>
+    <div class="form-row">
+        <div class="form-group"><label>Laporan Polis</label><input name="kesan_waris_laporan"></div>
+        <div class="form-group"><label>Agensi Rujukan (JPN/Polis/dll)</label><input name="kesan_waris_agensi"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Siaran Akhbar</label><input name="kesan_waris_siaram"></div>
+        <div class="form-group"><label>Jangka masa</label><input name="kesan_waris_jangka"></div>
+    </div>
+
+    <p style="font-size:12px;font-weight:600;margin:10px 0 2px;">iii) Penempatan Institusi</p>
+    <div class="form-row">
+        <div class="form-group"><label>Cadangan Institusi</label><input name="penempatan_institusi"></div>
+        <div class="form-group"><label>Bayaran</label><input name="penempatan_bayaran"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Alat Sokongan/Rawatan</label><input name="penempatan_alat_sokongan"></div>
+        <div class="form-group"><label>Pengangkutan/Pengiring</label><input name="penempatan_pengangkutan"></div>
+        <div class="form-group"><label>Jangka masa</label><input name="penempatan_jangka"></div>
+    </div>
+
+    <h4 style="font-size:12px; margin:12px 0 4px;color:#444;">b) Terapi Sokongan (Khidmat Perundingan / Sokongan Emosi / Intervensi Krisis)</h4>
+    <div class="form-row">
+        <div class="form-group"><label>Jenis Terapi Sokongan</label><input name="terapi_jenis"></div>
+        <div class="form-group"><label>Jangka masa</label><input name="terapi_jangka"></div>
+        <div class="form-group"><label>Rujukan ke agensi</label><input name="terapi_rujukan"></div>
+    </div>
+</div>
+</div>
+
+<!-- ═══ 8. SYOR ═══ -->
+<div class="section">
+<h2>8. SYOR / PELAN TINDAKAN PEGAWAI KERJA SOSIAL PERUBATAN</h2>
+<div class="section-body">
+    <div class="form-group" style="position:relative;">
+        <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span>Syor / Pelan Tindakan</span>
+            <button type="button" class="btn btn-sm btn-info" onclick="generateSyor('template')" title="Janakan guna template pintar — offline, free">📄 Generate Syor (Offline)</button>
+            {% if has_ai %}<button type="button" class="btn btn-sm btn-success" onclick="generateSyor('ai')" title="Janakan guna AI (deepseek) — perlukan internet">🤖 Generate Syor (AI)</button>{% else %}<button type="button" class="btn btn-sm btn-success" disabled title="AI tidak tersedia di PC ini (tiada internet/API key)">🤖 AI (Tak Tersedia)</button>{% endif %}
+            <span id="syorStatus" style="font-size:11px;color:#888;font-weight:400;"></span>
+        </label>
+        <textarea name="syor" id="syorText" rows="3" placeholder="Taip ayat tambahan (jika ada), kemudian tekan butang di atas. Offline=template pantas, AI=jana ayat profesional guna deepseek..."></textarea>
+    </div>
+</div>
+</div>
+
+<!-- ═══ 9. TANDATANGAN ═══ -->
+<div class="section">
+<h2>9. TANDATANGAN & PENGESAHAN</h2>
+<div class="section-body">
+    <div class="form-row">
+        <div class="form-group"><label>Nama Pegawai (PKSP)</label><input name="nama_pk"></div>
+        <div class="form-group"><label>Jawatan</label><input name="jawatan_pk" value="Pegawai Kerja Sosial Perubatan"></div>
+        <div class="form-group"><label>Tarikh</label><input name="tarikh_laporan" value="{{ today }}"></div>
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:1px dashed #ccc;">
+    <h3 style="font-size:13px;margin-bottom:8px;">ULASAN DAN PENGESAHAN KETUA JABATAN / PEGAWAI KANAN</h3>
+    <div class="form-row">
+        <div class="form-group"><label>Nama Ketua / Pegawai Kanan</label><input name="nama_ketua"></div>
+        <div class="form-group"><label>Cop Jabatan</label><input name="cop_ketua"></div>
+        <div class="form-group"><label>Tarikh</label><input name="tarikh_ketua" value="{{ today }}"></div>
+    </div>
+</div>
+</div>
+
+<!-- ═══ TABUNG DARUL IMAN (TDI) ═══ -->
+<div class="section">
+<h2>🏥 TABUNG DARUL IMAN (TDI) — Jana Dokumen</h2>
+<div class="section-body">
+    <p style="font-size:12px;color:#666;margin-bottom:10px;">Isi maklumat khusus untuk TDI, kemudian tekan butang jana. Nama & IC akan auto-isi dari Seksyen 1.</p>
+    <div class="form-row">
+        <div class="form-group"><label>Nama Pesakit</label><input name="tdi_nama" id="tdi_nama" placeholder="Auto dari Seksyen 1"></div>
+        <div class="form-group"><label>No. K/P</label><input name="tdi_ic" id="tdi_ic" placeholder="Auto dari Seksyen 1"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Diagnosis</label><input name="tdi_diagnosa" id="tdi_diagnosa" placeholder="Auto dari Seksyen 1"></div>
+        <div class="form-group"><label>Rawatan / Peralatan</label><input name="tdi_rawatan" placeholder="cth: LAMPIN PAKAI BUANG"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Kos Rawatan / Peralatan (RM)</label><input name="tdi_kos" value="Tidak Berkenaan"></div>
+        <div class="form-group"><label>Jumlah Mampu Ditanggung (RM)</label><input name="tdi_mampu" value="Tiada"></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Rujukan TDI</label><input name="rujukan" placeholder="HHT/UKSP/MSW15/26" value="HHT/UKSP/MSW15/26"></div>
+        <div class="form-group"><label>Tarikh</label><input name="tarikh_tdi" value="{{ today }}"></div>
+    </div>
+    <div class="form-group"><label>Ulasan PKSP (untuk Borang Ulasan TDI)</label>
+        <textarea name="tdi_ulasan" rows="3" placeholder="Taip ulasan untuk borang TDI (atau biar kosong — akan guna dari Seksyen 7/8)"></textarea>
+    </div>
+    <div class="form-group"><label>Syor (untuk Borang Ulasan TDI)</label>
+        <textarea name="tdi_syor" rows="2" placeholder="Taip syor untuk TDI (atau biar kosong — akan guna dari Seksyen 8)"></textarea>
+    </div>
+    <div style="margin-top:12px;text-align:center;">
+        <button type="button" class="btn btn-success" onclick="generateTDI()" style="font-size:15px;padding:14px 36px;">🏥 Jana Dokumen TDI (Surat Iringan + Ulasan)</button>
+        <span id="tdiStatus" style="display:inline-block;margin-left:12px;font-size:12px;color:#888;"></span>
+    </div>
+    <div id="tdiResult" style="display:none;margin-top:12px;padding:12px;background:#e8f5e9;border-radius:6px;border:1px solid #a5d6a7;"></div>
+</div>
+</div>
+
+<!-- ═══ BUTANG ═══ -->
+<div class="actions">
+    <button type="submit" name="format" value="docx" class="btn btn-primary">📄 Jana .docx</button>
+    <button type="submit" name="format" value="pdf" class="btn btn-success">📕 Jana PDF</button>
+    <button type="button" class="btn btn-info" onclick="simpanDraft()">💾 Simpan Draft</button>
+    <button type="button" class="btn btn-warning" onclick="muatDraft()">📂 Muat Draft</button>
+    <button type="button" class="btn btn-danger" onclick="clearForm()" style="background:#c62828;color:#fff;">🗑️ Clear Borang</button>
+    <button type="button" class="btn btn-sm" onclick="semakUpdate()" style="background:#455a64;color:#fff;" title="Semak dan pasang update terbaru app ini">🔄 Semak Update</button>
+</div>
+
+<div id="updateArea" style="display:none;margin-top:12px;padding:12px 16px;border-radius:6px;font-size:13px;"></div>
+
+<div id="draftArea" class="draft-list" style="display:none;">
+    <h3 style="font-size:14px;margin-bottom:8px;">Draft Tersimpan:</h3>
+    <div id="draftList"></div>
+</div>
+
+<div id="statusMessage" class="status"></div>
+</form>
+</div>
+<div style="text-align:center;color:#999;font-size:12px;margin-top:12px;">BPS Report Generator v{{ app_version }} — Jalan di localhost:5000</div>
+</div>
+
+<script>
+// ════════════════════════════════════
+// AUTO KIRA KEWANGAN
+// ════════════════════════════════════
+function kiraPendapatan() {
+    const vals = document.querySelectorAll('.pemasukan');
+    let total = 0;
+    vals.forEach(v => total += parseFloat(v.value) || 0);
+    document.querySelector('[name="jumlah_pendapatan"]').value = total;
+    kiraBaki();
+}
+function kiraPerbelanjaan() {
+    const vals = document.querySelectorAll('.belanja');
+    let total = 0;
+    vals.forEach(v => total += parseFloat(v.value) || 0);
+    document.querySelector('[name="jumlah_perbelanjaan"]').value = total;
+    kiraBaki();
+}
+function kiraCaruman() {
+    const vals = document.querySelectorAll('.caruman');
+    let total = 0;
+    vals.forEach(v => total += parseFloat(v.value) || 0);
+    document.querySelector('[name="jumlah_caruman"]').value = total;
+}
+function kiraTabungan() {
+    const vals = document.querySelectorAll('.tabungan');
+    let total = 0;
+    vals.forEach(v => total += parseFloat(v.value) || 0);
+    document.querySelector('[name="jumlah_tabungan"]').value = total;
+}
+function kiraHarta() {
+    const vals = document.querySelectorAll('.harta');
+    let total = 0;
+    vals.forEach(v => total += parseFloat(v.value) || 0);
+    document.querySelector('[name="jumlah_harta"]').value = total;
+}
+function kiraBaki() {
+    const pendapatan = parseFloat(document.querySelector('[name="jumlah_pendapatan"]').value) || 0;
+    const belanja = parseFloat(document.querySelector('[name="jumlah_perbelanjaan"]').value) || 0;
+    document.querySelector('[name="baki_jumlah_pendapatan"]').value = pendapatan;
+    document.querySelector('[name="baki_jumlah_perbelanjaan"]').value = belanja;
+    document.querySelector('[name="baki_bersih"]').value = pendapatan - belanja;
+}
+
+// ════════════════════════════════════
+// JADUAL KELUARGA
+// ════════════════════════════════════
+function addRow(prefix) {
+    const tbody = document.querySelector(`#table${prefix} tbody`);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td class="bil">${tbody.children.length + 1}</td>
+        <td><input name="kel_${prefix}_nama" class="f-nama"></td>
+        <td>
+            <select class="f-jantina" style="width:38%;padding:3px;font-size:11px;">
+                <option value="L">L</option><option value="P">P</option>
+            </select>
+            <input name="kel_${prefix}_umur" class="f-umur" style="width:55%;padding:3px;font-size:11px;" placeholder="umur">
+        </td>
+        <td><select class="f-status" style="width:100%;padding:3px;font-size:11px;">
+            <option>Bujang</option><option>Kahwin</option><option>Duda/Janda</option>
+        </select></td>
+        <td><input name="kel_${prefix}_pertalian" class="f-pertalian" style="padding:3px;font-size:11px;"></td>
+        <td><input name="kel_${prefix}_pekerjaan" class="f-pekerjaan" style="padding:3px;font-size:11px;"></td>
+        <td><input name="kel_${prefix}_pendapatan" type="number" class="f-pendapatan" style="padding:3px;font-size:11px;"></td>
+        <td><button type="button" class="btn-remove" onclick="this.closest('tr').remove();kemaskiniBil('${prefix}')">✕</button></td>`;
+    tbody.appendChild(tr);
+    kemaskiniBil(prefix);
+}
+function kemaskiniBil(prefix) {
+    const rows = document.querySelectorAll(`#table${prefix} tbody tr`);
+    rows.forEach((r, i) => r.querySelector('.bil').textContent = i + 1);
+}
+function kumpulKeluarga(prefix) {
+    const rows = document.querySelectorAll(`#table${prefix} tbody tr`);
+    const data = [];
+    rows.forEach(r => {
+        const nama = r.querySelector('.f-nama')?.value || '';
+        const jantina = r.querySelector('.f-jantina')?.value || '';
+        const umur = r.querySelector('.f-umur')?.value || '';
+        const status = r.querySelector('.f-status')?.value || '';
+        const pertalian = r.querySelector('.f-pertalian')?.value || '';
+        const pekerjaan = r.querySelector('.f-pekerjaan')?.value || '';
+        const pendapatan = r.querySelector('.f-pendapatan')?.value || '';
+        if (nama) data.push({nama, jantina, umur, status, pertalian, pekerjaan, pendapatan});
+    });
+    return JSON.stringify(data);
+}
+function simpanDataKeluarga() {
+    document.getElementById('keluarga_serumah_json').value = kumpulKeluarga('Serumah');
+    document.getElementById('keluarga_berasingan_json').value = kumpulKeluarga('Berasingan');
+}
+
+// ════════════════════════════════════
+// DRAFT — Simpan / Muat
+// ════════════════════════════════════
+function simpanDraft() {
+    simpanDataKeluarga();
+    const fd = new FormData(document.getElementById('bpsForm'));
+    fd.set('draft_key', fd.get('nama') || 'draft_' + new Date().toISOString().slice(0,16));
+    fetch('/save_draft', {method:'POST', body: fd})
+    .then(r => r.json())
+    .then(d => {
+        const msg = document.getElementById('statusMessage');
+        msg.className = 'status ok';
+        msg.textContent = '✅ Draft "' + d.key + '" berjaya disimpan!';
+        msg.style.display = 'block';
+    });
+}
+function muatDraft() {
+    fetch('/list_drafts')
+    .then(r => r.json())
+    .then(keys => {
+        const area = document.getElementById('draftArea');
+        const list = document.getElementById('draftList');
+        area.style.display = 'block';
+        list.innerHTML = '';
+        if (!keys.length) { list.innerHTML = '<p style="color:#888;">Tiada draft tersimpan.</p>'; return; }
+        keys.forEach(k => {
+            const div = document.createElement('div');
+            div.className = 'draft-item';
+            div.innerHTML = `<span><strong>${k.nama}</strong> — ${k.tarikh || '-'}</span>
+                <button onclick="loadDraft('${k.key}')">Muat</button>`;
+            list.appendChild(div);
+        });
+    });
+}
+function loadDraft(key) {
+    fetch('/load_draft/' + encodeURIComponent(key))
+    .then(r => r.json())
+    .then(data => {
+        Object.entries(data).forEach(([k,v]) => {
+            const el = document.querySelector(`[name="${k}"]`);
+            if (el && !k.includes('keluarga_') && k !== 'draft_key') {
+                if (el.type === 'checkbox') {
+                    // skip checkboxes for now — too complex to restore
+                } else {
+                    el.value = v || '';
+                }
+            }
+        });
+        document.getElementById('statusMessage').className = 'status info';
+        document.getElementById('statusMessage').textContent = '✅ Draft "' + key + '" berjaya dimuatkan!';
+        document.getElementById('statusMessage').style.display = 'block';
+        document.getElementById('draftArea').style.display = 'none';
+        // refresh calculations
+        kiraPendapatan(); kiraPerbelanjaan(); kiraCaruman(); kiraTabungan(); kiraHarta();
+    });
+}
+
+// ════════════════════════════════════
+// VALIDASI & HANTAR
+// ════════════════════════════════════
+function validateForm() {
+    simpanDataKeluarga();
+    const nama = document.querySelector('[name="nama"]').value.trim();
+    if (!nama) {
+        document.getElementById('statusMessage').className = 'status err';
+        document.getElementById('statusMessage').textContent = '❌ Sila isi Nama Pesakit.';
+        document.getElementById('statusMessage').style.display = 'block';
+        return false;
+    }
+    return true;
+}
+
+// ════════════════════════════════════
+// AUTO-ISI TDI dari Seksyen 1
+// ════════════════════════════════════
+function syncTDIFromSection1() {
+    const nama = document.querySelector('[name="nama"]').value;
+    const ic = document.querySelector('[name="ic"]').value;
+    const diagnosa = document.querySelector('[name="diagnosa"]').value;
+    if (nama) document.querySelector('[name="tdi_nama"]').value = nama;
+    if (ic) document.querySelector('[name="tdi_ic"]').value = ic;
+    if (diagnosa) document.querySelector('[name="tdi_diagnosa"]').value = diagnosa;
+}
+// Auto-sync bila nama/ic/diagnosa berubah
+document.querySelector('[name="nama"]').addEventListener('input', syncTDIFromSection1);
+document.querySelector('[name="ic"]').addEventListener('input', syncTDIFromSection1);
+document.querySelector('[name="diagnosa"]').addEventListener('input', syncTDIFromSection1);
+
+// ════════════════════════════════════
+// GENERATE DOKUMEN TDI
+// ════════════════════════════════════
+function generateTDI() {
+    simpanDataKeluarga();
+    const btn = document.querySelector('[onclick="generateTDI()"]');
+    const status = document.getElementById('tdiStatus');
+    const result = document.getElementById('tdiResult');
+
+    btn.disabled = true;
+    status.textContent = '⏳ Menjana dokumen...';
+    result.style.display = 'none';
+
+    // Sync TDI fields from Section 1
+    syncTDIFromSection1();
+
+    const fd = new FormData(document.getElementById('bpsForm'));
+    fetch('/generate_tdi', {method:'POST', body: fd})
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        if (data.error) {
+            status.textContent = '❌ ' + data.error;
+            return;
+        }
+        status.textContent = '✅ Siap!';
+        result.style.display = 'block';
+        result.innerHTML = `<strong>✅ Dokumen TDI berjaya dijana!</strong><br><br>
+            📁 Folder: <code>${data.folder}</code><br>
+            📄 ${data.surat}<br>
+            📋 ${data.ulasan}<br>
+            <span style="font-size:12px;color:#555;">(${data.file_count} fail dalam folder pesakit)</span>`;
+    })
+    .catch(err => {
+        btn.disabled = false;
+        status.textContent = '❌ Ralat: ' + err;
+    });
+}
+
+// ════════════════════════════════════
+// CLEAR BORANG — kosongkan semua untuk pesakit baru
+// ════════════════════════════════════
+function clearForm() {
+    if (!confirm('Yakin nak clear semua data borang? Data yang belum disimpan akan hilang.')) return;
+
+    // Reset semua input, select, textarea dalam form
+    const form = document.getElementById('bpsForm');
+    const elements = form.querySelectorAll('input, select, textarea');
+    elements.forEach(el => {
+        if (el.type === 'checkbox') {
+            el.checked = false;
+        } else if (el.type === 'hidden') {
+            el.value = '';
+        } else if (el.tagName === 'SELECT') {
+            el.selectedIndex = 0;
+        } else if (el.type === 'number' || el.type === 'text' || el.tagName === 'TEXTAREA') {
+            el.value = '';
+        }
+    });
+
+    // Reset tarikh ke hari ini
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const dateStr = dd + '/' + mm + '/' + yyyy;
+    document.querySelector('[name="tarikh_daftar"]').value = dateStr;
+    document.querySelector('[name="tarikh_laporan"]').value = dateStr;
+    document.querySelector('[name="tarikh_ketua"]').value = dateStr;
+    document.querySelector('[name="tarikh_tdi"]').value = dateStr;
+
+    // Reset TDI default values
+    document.querySelector('[name="tdi_kos"]').value = 'Tidak Berkenaan';
+    document.querySelector('[name="tdi_mampu"]').value = 'Tiada';
+
+    // Kosongkan jadual keluarga
+    document.querySelectorAll('#tableSerumah tbody, #tableBerasingan tbody').forEach(tbody => {
+        tbody.innerHTML = '';
+    });
+
+    // Reset status messages
+    document.getElementById('statusMessage').style.display = 'none';
+    document.getElementById('tdiResult').style.display = 'none';
+    document.getElementById('tdiStatus').textContent = '';
+    document.getElementById('syorStatus').textContent = '';
+
+    document.getElementById('statusMessage').className = 'status info';
+    document.getElementById('statusMessage').textContent = '✅ Borang telah dikosongkan. Sedia untuk pesakit baru!';
+    document.getElementById('statusMessage').style.display = 'block';
+
+    // Scroll ke atas
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ════════════════════════════════════
+// GENERATE SYOR — panggil server
+// ════════════════════════════════════
+function generateSyor(mode) {
+    simpanDataKeluarga();
+    const status = document.getElementById('syorStatus');
+    const btns = document.querySelectorAll('[onclick^="generateSyor"]');
+    btns.forEach(b => b.disabled = true);
+
+    if (mode === 'ai') {
+        status.textContent = '⏳ AI sedang menjana (10-15 saat)...';
+    } else {
+        status.textContent = '⏳ Menjana guna template...';
+    }
+
+    const fd = new FormData(document.getElementById('bpsForm'));
+    const url = mode === 'ai' ? '/generate_syor_ai' : '/generate_syor';
+    fetch(url, {method:'POST', body: fd})
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            status.textContent = '❌ Ralat: ' + data.error;
+            btns.forEach(b => b.disabled = false);
+            return;
+        }
+        document.getElementById('syorText').value = data.syor;
+        status.textContent = '✅ ' + (mode === 'ai' ? 'AI' : 'Template') + ' siap! (~' + data.syor.split(' ').length + ' patah perkataan)';
+        btns.forEach(b => b.disabled = false);
+        const ta = document.getElementById('syorText');
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(ta.scrollHeight, 300) + 'px';
+    })
+    .catch(err => {
+        status.textContent = '❌ Ralat: ' + err;
+        btns.forEach(b => b.disabled = false);
+    });
+}
+
+// ════════════════════════════════════
+// SEMAK UPDATE — auto-update app
+// ════════════════════════════════════
+function semakUpdate() {
+    const area = document.getElementById('updateArea');
+    area.style.display = 'block';
+    area.style.background = '#e3f2fd';
+    area.style.border = '1px solid #90caf9';
+    area.textContent = '⏳ Menyemak update...';
+
+    fetch('/check_update')
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            area.style.background = '#ffebee';
+            area.style.border = '1px solid #ef9a9a';
+            area.textContent = data.error + (data.hint ? ' (' + data.hint + ')' : '');
+            return;
+        }
+        if (!data.has_update) {
+            area.style.background = '#e8f5e9';
+            area.style.border = '1px solid #a5d6a7';
+            area.innerHTML = `✅ Anda dah guna versi terkini (v${data.current}).<br><span style="font-size:12px;color:#555;">Versi terbaru: v${data.latest}</span>`;
+            return;
+        }
+        // Ada update — tanya dulu
+        const fList = data.files.map(f => '• ' + f).join('<br>');
+        const confirmado = confirm(
+            `Versi baru tersedia!\n\nSekarang: v${data.current}\nTerbaru: v${data.latest}\n\nPerubahan:\n${data.change_log}\n\nFail akan dikemas kini:\n${data.files.join('\n')}\n\nTekan OK untuk pasang update sekarang.`
+        );
+        if (!confirmado) {
+            area.style.background = '#fff8e1';
+            area.style.border = '1px solid #ffe082';
+            area.textContent = '⏸️ Update dibatalkan.';
+            return;
+        }
+        area.style.background = '#fff8e1';
+        area.style.border = '1px solid #ffe082';
+        area.textContent = '⬇️ Memasang update...';
+        return fetch('/apply_update', {method:'POST'})
+        .then(r => r.json())
+        .then(res => {
+            if (res.error) {
+                area.style.background = '#ffebee';
+                area.style.border = '1px solid #ef9a9a';
+                area.textContent = '❌ ' + res.error;
+                return;
+            }
+            area.style.background = '#e8f5e9';
+            area.style.border = '1px solid #a5d6a7';
+            area.innerHTML = `<strong>${res.message}</strong><br><br>` + res.result.map(x => x + '<br>').join('');
+        })
+        .catch(err => {
+            area.style.background = '#ffebee';
+            area.style.border = '1px solid #ef9a9a';
+            area.textContent = '❌ Ralat semasa pasang update: ' + err;
+        });
+    })
+    .catch(err => {
+        area.style.background = '#ffebee';
+        area.style.border = '1px solid #ef9a9a';
+        area.textContent = '❌ Ralat menyemak update: ' + err;
+    });
+}
+</script>
+</body>
+</html>

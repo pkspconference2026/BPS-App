@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+
+# Venv — recreate kat PC target guna setup.bat
+.venv/
+
+# Output & data — JANGAN push (data pesakit sensitif!)
+output/
+*.bak
+
+# Config peribadi — setiap PC ada setting sendiri
+config.txt
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
