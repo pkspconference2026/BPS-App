@@ -60,7 +60,7 @@ def _baca_config_value(key):
             with open(cfg_path, encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
-                    if line.startswith(key + '='):
+                    if line.startswith(key + '=') or line.startswith(key + ' ='):
                         val = line.split('=', 1)[1].strip().strip('"').strip("'")
                         if val:
                             return val
@@ -1423,7 +1423,7 @@ def check_update():
     change_log = manifest.get('change_log', 'Tiada catatan perubahan.')
 
     return jsonify({
-        'current': APP_VERSION, 1.0
+        'current': APP_VERSION,
         'latest': latest,
         'has_update': latest > APP_VERSION,
         'files_count': len(files),
