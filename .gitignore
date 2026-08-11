@@ -18,3 +18,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Letterhead images — setiap hospital guna sendiri
+static/letterhead*.png
