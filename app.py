@@ -311,18 +311,60 @@ def generate_docx(form_data):
     data = prepare_data(form_data)
     doc = Document()
 
-    # Page setup
+    # ── Page setup ──
     for section in doc.sections:
-        section.top_margin = Cm(2.5)
-        section.bottom_margin = Cm(2.5)
+        section.top_margin = Cm(3.5)      # lebih ruang untuk header gambar
+        section.bottom_margin = Cm(3.0)   # lebih ruang untuk footer gambar
         section.left_margin = Cm(2.5)
         section.right_margin = Cm(2.5)
 
+    # ── Default style — Arial 11pt, line spacing 1.15, no space after ──
     style = doc.styles['Normal']
     font = style.font
     font.name = 'Arial'
     font.size = Pt(11)
+    pf = style.paragraph_format
+    pf.line_spacing = 1.15
+    pf.space_after = Pt(0)
+    pf.space_before = Pt(0)
 
+    # Also set heading styles
+    for level in [1, 2, 3]:
+        hs = doc.styles[f'Heading {level}']
+        hs.font.name = 'Arial'
+        hs.font.color.rgb = RGBColor(0, 0, 0)
+        hs.paragraph_format.space_before = Pt(6)
+        hs.paragraph_format.space_after = Pt(3)
+        hs.paragraph_format.line_spacing = 1.15
+
+    # ── Header & Footer (letterhead image) ──
+    APP_DIR = os.path.dirname(os.path.abspath(__file__))
+    header_img_path = os.path.join(APP_DIR, 'static', 'letterhead-header.png')
+    footer_img_path = os.path.join(APP_DIR, 'static', 'letterhead-footer.png')
+
+    for section in doc.sections:
+        # Header
+        if os.path.exists(header_img_path):
+            header = section.header
+            header.is_linked_to_previous = False
+            hp = header.paragraphs[0]
+            hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            hp.paragraph_format.space_after = Pt(0)
+            # Content width = page width - left margin - right margin = ~16cm
+            run = hp.add_run()
+            run.add_picture(header_img_path, width=Cm(15.5))
+
+        # Footer
+        if os.path.exists(footer_img_path):
+            footer = section.footer
+            footer.is_linked_to_previous = False
+            fp = footer.paragraphs[0]
+            fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            fp.paragraph_format.space_before = Pt(0)
+            run = fp.add_run()
+            run.add_picture(footer_img_path, width=Cm(15.5))
+
+    # ── Helper functions ──
     def add_heading(text, level=1):
         h = doc.add_heading(text, level=level)
         for run in h.runs:
@@ -331,26 +373,37 @@ def generate_docx(form_data):
 
     def add_field(label, value):
         p = doc.add_paragraph()
-        p.paragraph_format.space_after = Pt(2)
-        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.line_spacing = 1.15
         run = p.add_run(f'{label}\t: ')
         run.bold = True
+        run.font.name = 'Arial'
         run.font.size = Pt(11)
-        p.add_run(str(value) if value else '___________________')
+        r2 = p.add_run(str(value) if value else '___________________')
+        r2.font.name = 'Arial'
+        r2.font.size = Pt(11)
 
     def add_section_title(text):
         p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(12)
+        p.paragraph_format.space_before = Pt(6)
+        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.line_spacing = 1.15
         run = p.add_run(text)
         run.bold = True
         run.font.size = Pt(12)
+        run.font.name = 'Arial'
 
     def add_sub_heading(text):
         p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.line_spacing = 1.15
         run = p.add_run(text)
         run.bold = True
         run.italic = True
         run.font.size = Pt(11)
+        run.font.name = 'Arial'
 
     # ═══════════════════════════════════
     # Tajuk
@@ -1180,6 +1233,16 @@ def generate_surat_iringan(data, output_dir):
     style = doc.styles['Normal']
     style.font.name = 'Arial'
     style.font.size = Pt(11)
+    pf = style.paragraph_format
+    pf.line_spacing = 1.15
+    pf.space_after = Pt(0)
+    pf.space_before = Pt(0)
+
+    for section in doc.sections:
+        section.top_margin = Cm(2.5)
+        section.bottom_margin = Cm(2.5)
+        section.left_margin = Cm(2.5)
+        section.right_margin = Cm(2.5)
 
     # Rujukan & Tarikh (kanan)
     p = doc.add_paragraph()
@@ -1248,6 +1311,16 @@ def generate_borang_ulasan(data, output_dir):
     style = doc.styles['Normal']
     style.font.name = 'Arial'
     style.font.size = Pt(11)
+    pf = style.paragraph_format
+    pf.line_spacing = 1.15
+    pf.space_after = Pt(0)
+    pf.space_before = Pt(0)
+
+    for section in doc.sections:
+        section.top_margin = Cm(2.5)
+        section.bottom_margin = Cm(2.5)
+        section.left_margin = Cm(2.5)
+        section.right_margin = Cm(2.5)
 
     # Tajuk
     p = doc.add_paragraph()
