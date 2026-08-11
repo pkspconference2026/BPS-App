@@ -1380,9 +1380,7 @@ def generate_borang_ulasan(data, output_dir):
     run = p.add_run('C.\tSYOR PEGAWAI KERJA SOSIAL PERUBATAN')
     run.bold = True
 
-    syor = data['tdi_syor'] if data['tdi_syor'] else data['syor']
-    doc.add_paragraph(syor if syor else '_________________________')
-
+    doc.add_paragraph('Berdasarkan siasatan kami, adalah dicadangkan supaya pesakit ini dibantu untuk mendapatkan bantuan...')
     doc.add_paragraph()
     doc.add_paragraph()
     doc.add_paragraph(f'\t\tTandatangan Pegawai \t:')
