@@ -1228,7 +1228,7 @@ def _format_tarikh(dt):
 
 
 def generate_surat_iringan(data, output_dir):
-    """Jana SURAT IRINGAN TDI"""
+    """Jana SURAT IRINGAN TDI — dengan letterhead"""
     doc = Document()
     style = doc.styles['Normal']
     style.font.name = 'Arial'
@@ -1239,10 +1239,30 @@ def generate_surat_iringan(data, output_dir):
     pf.space_before = Pt(0)
 
     for section in doc.sections:
-        section.top_margin = Cm(2.5)
-        section.bottom_margin = Cm(2.5)
+        section.top_margin = Cm(3.5)
+        section.bottom_margin = Cm(3.0)
         section.left_margin = Cm(2.5)
         section.right_margin = Cm(2.5)
+
+    # Header & Footer letterhead
+    APP_DIR = os.path.dirname(os.path.abspath(__file__))
+    hdr_img = os.path.join(APP_DIR, 'static', 'letterhead-header.png')
+    ftr_img = os.path.join(APP_DIR, 'static', 'letterhead-footer.png')
+    for section in doc.sections:
+        if os.path.exists(hdr_img):
+            h = section.header
+            h.is_linked_to_previous = False
+            hp = h.paragraphs[0]
+            hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = hp.add_run()
+            run.add_picture(hdr_img, width=Cm(15.5))
+        if os.path.exists(ftr_img):
+            f = section.footer
+            f.is_linked_to_previous = False
+            fp = f.paragraphs[0]
+            fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = fp.add_run()
+            run.add_picture(ftr_img, width=Cm(15.5))
 
     # Rujukan & Tarikh (kanan)
     p = doc.add_paragraph()
