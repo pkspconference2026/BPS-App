@@ -80,15 +80,22 @@ echo [OK] config.txt ready.
 
 echo.
 :: ── Step 5: Shortcut di Desktop ──
-echo Step 5: Creating shortcut di Desktop...
+echo Step 5: Creating shortcuts di Desktop...
 powershell -ExecutionPolicy Bypass -Command ^
 "$WS = New-Object -ComObject WScript.Shell; ^
 $SC = $WS.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\BPS Report.lnk'); ^
-$SC.TargetPath = '%~dp0Jalan BPS.bat'; ^
+$SC.TargetPath = [Environment]::GetFolderPath('System') + '\wscript.exe'; ^
+$SC.Arguments = '%~dp0Jalan BPS.vbs'; ^
 $SC.WorkingDirectory = '%~dp0'; ^
 $SC.Description = 'BPS Report Generator - Laporan Penilaian Biopsikososial'; ^
 $SC.Save(); ^
-Write-Host '  Shortcut created!'"
+$SC2 = $WS.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\Stop BPS.lnk'); ^
+$SC2.TargetPath = [Environment]::GetFolderPath('System') + '\wscript.exe'; ^
+$SC2.Arguments = '%~dp0Stop BPS.vbs'; ^
+$SC2.WorkingDirectory = '%~dp0'; ^
+$SC2.Description = 'Matikan Server BPS'; ^
+$SC2.Save(); ^
+Write-Host '  Shortcuts created!'"
 
 echo.
 echo ============================================

@@ -63,14 +63,21 @@ echo [5/5] Buat shortcut Desktop...
 powershell -Command "& {
     $WshShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut('%USERPROFILE%\Desktop\BPS Report.lnk')
-    $Shortcut.TargetPath = '%DEST%\.venv\Scripts\python.exe'
-    $Shortcut.Arguments = 'app.py'
+    $Shortcut.TargetPath = '%SystemRoot%\System32\wscript.exe'
+    $Shortcut.Arguments = '%DEST%\Jalan BPS.vbs'
     $Shortcut.WorkingDirectory = '%DEST%'
     $Shortcut.Description = 'BPS Report Generator'
     if (Test-Path '%DEST%\BPS.ico') { $Shortcut.IconLocation = '%DEST%\BPS.ico' }
     $Shortcut.Save()
+    # Stop shortcut
+    $Shortcut2 = $WshShell.CreateShortcut('%USERPROFILE%\Desktop\Stop BPS.lnk')
+    $Shortcut2.TargetPath = '%SystemRoot%\System32\wscript.exe'
+    $Shortcut2.Arguments = '%DEST%\Stop BPS.vbs'
+    $Shortcut2.WorkingDirectory = '%DEST%'
+    $Shortcut2.Description = 'Matikan Server BPS'
+    $Shortcut2.Save()
 }"
-echo    ✅ Shortcut 'BPS Report' dah kat Desktop
+echo    ✅ Shortcut 'BPS Report' & 'Stop BPS' dah kat Desktop
 
 :: Selesai
 echo ============================================
