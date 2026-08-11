@@ -90,5 +90,11 @@ echo.
 echo  Untuk update masa depan, tekan butang
 echo  🔄 Semak Update dalam app tu sendiri.
 echo.
+echo 📌 LETAK LETTERHEAD HOSPITAL:
+echo   Salin gambar letterhead hospital korang ke folder static/:
+echo     static\letterhead-header.png
+echo     static\letterhead-footer.png
+echo   Kalau takde, app tetap jalan — header/footer kosong.
+echo.
 pause
 start "" "%DEST%\.venv\Scripts\python.exe" "%DEST%\app.py"

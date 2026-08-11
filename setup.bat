@@ -112,4 +112,10 @@ echo.
 echo Note: Untuk guna AI generate, PC kena ada internet.
 echo       Tanpa internet, guna butang "Generate Syor (Offline)".
 echo.
+echo 📌 LETAK LETTERHEAD HOSPITAL:
+echo   Salin gambar letterhead hospital korang ke folder static/:
+echo     static\letterhead-header.png
+echo     static\letterhead-footer.png
+echo   Kalau takde, app tetap jalan — header/footer kosong.
+echo.
 pause
