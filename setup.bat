@@ -85,13 +85,13 @@ powershell -ExecutionPolicy Bypass -Command ^
 "$WS = New-Object -ComObject WScript.Shell; ^
 $SC = $WS.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\BPS Report.lnk'); ^
 $SC.TargetPath = [Environment]::GetFolderPath('System') + '\wscript.exe'; ^
-$SC.Arguments = '%~dp0Jalan BPS.vbs'; ^
+$SC.Arguments = '"%~dp0Jalan BPS.vbs"'; ^
 $SC.WorkingDirectory = '%~dp0'; ^
 $SC.Description = 'BPS Report Generator - Laporan Penilaian Biopsikososial'; ^
 $SC.Save(); ^
 $SC2 = $WS.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\Stop BPS.lnk'); ^
 $SC2.TargetPath = [Environment]::GetFolderPath('System') + '\wscript.exe'; ^
-$SC2.Arguments = '%~dp0Stop BPS.vbs'; ^
+$SC2.Arguments = '"%~dp0Stop BPS.vbs"'; ^
 $SC2.WorkingDirectory = '%~dp0'; ^
 $SC2.Description = 'Matikan Server BPS'; ^
 $SC2.Save(); ^
