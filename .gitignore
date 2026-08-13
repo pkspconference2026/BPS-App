@@ -21,3 +21,7 @@ Thumbs.db
 
 # Letterhead images — setiap hospital guna sendiri
 static/letterhead*.png
+
+# PyInstaller build artifacts & binary output — JANGAN push (besar)
+build/
+dist/

@@ -6,10 +6,24 @@ Jalan: python app.py, then buka http://localhost:5000
 """
 
 import os
+import sys
 import json
 import requests
 from datetime import datetime
 from io import BytesIO
+
+def _resource_path(rel=''):
+    """Cari fail sumber bila jalan sbg .py biasa ATAU .exe (PyInstaller _MEIPASS).
+
+    Dalam EXE, fail (templates/, static/) dikumpulkan ke folder _MEIPASS
+    yang read-only. Fail boleh-tulis (output/, config.txt) pula letak
+    kat folder yang sama dengan exe supaya kekal selepas tutup.
+    """
+    if getattr(sys, '_MEIPASS', ''):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, rel) if rel else base
 
 from flask import Flask, render_template, request, send_file, jsonify
 from docx import Document
@@ -31,14 +45,24 @@ app.config['SECRET_KEY'] = 'bps-secret-kkm-2026'
 # (lihat fungsi /check_update dan /apply_update di bawah).
 APP_VERSION = '1.1.0'
 
+# Flag: betul ke app ni jalan sebagai EXE PyInstaller?
+# Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).
+IS_EXE = bool(getattr(sys, '_MEIPASS', ''))
+
 # ── Lokasi Output (Dropbox / config / local) ──
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-LOCAL_OUTPUT = os.path.join(APP_DIR, 'output')
+APP_DIR = _resource_path('')
+# Folder "boleh tulis" = sebelah exe bila dalam EXE, else APP_DIR.
+if getattr(sys, '_MEIPASS', ''):
+    EXE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+    LOCAL_OUTPUT = os.path.join(EXE_DIR, 'output')
+else:
+    EXE_DIR = APP_DIR
+    LOCAL_OUTPUT = os.path.join(APP_DIR, 'output')
 os.makedirs(LOCAL_OUTPUT, exist_ok=True)
 
 def _baca_config():
     """Baca OUTPUT_PATH dari config.txt (jika ada)."""
-    cfg_path = os.path.join(APP_DIR, 'config.txt')
+    cfg_path = os.path.join(EXE_DIR, 'config.txt')
     if os.path.exists(cfg_path):
         try:
             with open(cfg_path, encoding='utf-8') as f:
@@ -54,7 +78,7 @@ def _baca_config():
 
 def _baca_config_value(key):
     """Baca sebarang KEY = value dari config.txt (contoh: UPDATE_URL)."""
-    cfg_path = os.path.join(APP_DIR, 'config.txt')
+    cfg_path = os.path.join(EXE_DIR, 'config.txt')
     if os.path.exists(cfg_path):
         try:
             with open(cfg_path, encoding='utf-8') as f:
@@ -338,9 +362,8 @@ def generate_docx(form_data):
         hs.paragraph_format.line_spacing = 1.15
 
     # ── Header & Footer (letterhead image) ──
-    APP_DIR = os.path.dirname(os.path.abspath(__file__))
-    header_img_path = os.path.join(APP_DIR, 'static', 'letterhead-header.png')
-    footer_img_path = os.path.join(APP_DIR, 'static', 'letterhead-footer.png')
+    header_img_path = _resource_path(os.path.join('static', 'letterhead-header.png'))
+    footer_img_path = _resource_path(os.path.join('static', 'letterhead-footer.png'))
 
     for section in doc.sections:
         # Header
@@ -1245,9 +1268,8 @@ def generate_surat_iringan(data, output_dir):
         section.right_margin = Cm(2.5)
 
     # Header & Footer letterhead
-    APP_DIR = os.path.dirname(os.path.abspath(__file__))
-    hdr_img = os.path.join(APP_DIR, 'static', 'letterhead-header.png')
-    ftr_img = os.path.join(APP_DIR, 'static', 'letterhead-footer.png')
+    hdr_img = _resource_path(os.path.join('static', 'letterhead-header.png'))
+    ftr_img = _resource_path(os.path.join('static', 'letterhead-footer.png'))
     for section in doc.sections:
         if os.path.exists(hdr_img):
             h = section.header
@@ -1495,6 +1517,15 @@ ALLOWED_UPDATE_PATHS = ('app.py', 'templates/', 'static/')
 @app.route('/check_update', methods=['GET'])
 def check_update():
     """Bandingkan versi semasa dengan versi dalam manifest."""
+    # Dalam EXE, auto-update tak disokong — bagi tahu user.
+    if IS_EXE:
+        return jsonify({
+            'current': APP_VERSION,
+            'latest': APP_VERSION,
+            'has_update': False,
+            'is_exe': True,
+            'note': 'Versi EXE — kemaskini melalui pengedar semula (hubungi penghasil app untuk BPS.exe terkini).'
+        })
     if not UPDATE_URL:
         return jsonify({
             'error': 'URL update belum dikonfigurasi.',
@@ -1526,6 +1557,9 @@ def check_update():
 @app.route('/apply_update', methods=['POST'])
 def apply_update():
     """Muat turun fail terkini dari manifest dan gantikan fail tempatan."""
+    if IS_EXE:
+        return jsonify({'error': 'Versi EXE tidak menyokong auto-update. '
+                                  'Sila dapatkan BPS.exe terkini dari penghasil app.'})
     if not UPDATE_URL:
         return jsonify({'error': 'URL update belum dikonfigurasi.'})
     try:
@@ -1588,6 +1622,8 @@ def apply_update():
 # Jalan
 # ─────────────────────────────────────────────────
 if __name__ == '__main__':
+    import webbrowser
+    import threading
     print("=" * 60)
     print(f"  BPS REPORT GENERATOR v{APP_VERSION}")
     print("  Laporan Penilaian Biopsikososial")
@@ -1596,4 +1632,10 @@ if __name__ == '__main__':
     print(f"  Output: {OUTPUT_DIR}")
     print("  Ctrl+C untuk berhenti")
     print("=" * 60)
+    # Auto-buka browser lepas server ready (berguna bila jadi .exe)
+    def _buka_browser():
+        import time
+        time.sleep(2)
+        webbrowser.open('http://localhost:5000')
+    threading.Thread(target=_buka_browser, daemon=True).start()
     app.run(debug=False, host='127.0.0.1', port=5000)
