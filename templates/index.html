@@ -83,14 +83,14 @@ table.ahli .btn-remove { background: #ef5350; color: #fff; border: none; border-
     </div>
     <div class="form-row">
         <div class="form-group"><label>Nama Pesakit</label><input name="nama" required></div>
-        <div class="form-group"><label>No. Kad Pengenalan</label><input name="ic" placeholder="810621-XX-XXXX"></div>
+        <div class="form-group"><label>No. Kad Pengenalan</label><input name="ic" placeholder="810621-XX-XXXX" oninput="autoIsiDariIC(this)"></div>
     </div>
     <div class="form-row">
         <div class="form-group" style="flex:2"><label>Alamat</label><textarea name="alamat" rows="2"></textarea></div>
         <div class="form-group"><label>No. Telefon</label><input name="telefon"></div>
     </div>
     <div class="form-row">
-        <div class="form-group"><label>Tarikh Lahir</label><input name="tarikh_lahir" placeholder="dd/mm/yyyy"></div>
+        <div class="form-group"><label>Tarikh Lahir</label><input name="tarikh_lahir" placeholder="dd/mm/yyyy" oninput="autoKiraUmur(this)"></div>
         <div class="form-group"><label>Umur</label><input name="umur" type="number"></div>
         <div class="form-group"><label>Tempat Lahir</label><input name="tempat_lahir"></div>
     </div>
@@ -436,6 +436,36 @@ table.ahli .btn-remove { background: #ef5350; color: #fff; border: none; border-
 </div>
 
 <script>
+// ════════════════════════════════════
+// AUTO ISI TARIKH LAHIR & UMUR (dari IC)
+// ════════════════════════════════════
+function autoIsiDariIC(input) {
+    const ic = input.value.replace(/[^0-9]/g, '');  // buang dash/spasi
+    if (ic.length < 6) return;
+    const yy = ic.slice(0, 2);
+    const mm = ic.slice(2, 4);
+    const dd = ic.slice(4, 6);
+    if (!/^\d{2}$/.test(mm) || !/^\d{2}$/.test(dd)) return;
+    if (parseInt(mm, 10) < 1 || parseInt(mm, 10) > 12) return;
+    if (parseInt(dd, 10) < 1 || parseInt(dd, 10) > 31) return;
+    // IC 2 digit tahun: 00-24 -> 2000+, 25-99 -> 1900+
+    const fullYear = parseInt(yy, 10) <= 24 ? 2000 + parseInt(yy, 10) : 1900 + parseInt(yy, 10);
+    const tgl = document.querySelector('[name="tarikh_lahir"]');
+    tgl.value = dd + '/' + mm + '/' + fullYear;
+    autoKiraUmur(tgl);
+}
+function autoKiraUmur(input) {
+    const m = (input.value || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (!m) return;
+    const dob = new Date(+m[3], +m[2] - 1, +m[1]);
+    if (isNaN(dob.getTime())) return;
+    const now = new Date();
+    let umur = now.getFullYear() - dob.getFullYear();
+    const mDiff = now.getMonth() - dob.getMonth();
+    if (mDiff < 0 || (mDiff === 0 && now.getDate() < dob.getDate())) umur--;
+    document.querySelector('[name="umur"]').value = umur >= 0 ? umur : '';
+}
+
 // ════════════════════════════════════
 // AUTO KIRA KEWANGAN
 // ════════════════════════════════════

@@ -1200,7 +1200,12 @@ Tulis syor yang:
         'model': AI_MODEL,
         'messages': [{'role': 'user', 'content': prompt}],
         'temperature': 0.4,
-        'max_tokens': 400,
+        # v4-flash buat reasoning panjang; max_tokens kecil (400) sebabkan
+        # finish_reason=length & content=None -> crash .strip()
+        'max_tokens': 2000,
+        # Matikan reasoning mode supaya output terus dalam 'content'
+        # (kalau reasoning aktif, content boleh jadi None)
+        'reasoning': {'enabled': False},
     }
 
     try:
@@ -1208,7 +1213,14 @@ Tulis syor yang:
                              headers=headers, json=payload, timeout=60)
         resp.raise_for_status()
         result = resp.json()
-        syor = result['choices'][0]['message']['content'].strip()
+        msg = result['choices'][0]['message']
+        # DeepSeek v4-flash letak output dalam 'reasoning' bila reasoning mode;
+        # 'content' boleh jadi None. Guna fallback supaya tak crash .strip().
+        syor_raw = msg.get('content') or msg.get('reasoning') or ''
+        if not syor_raw:
+            return jsonify({'error': 'AI tak return kandungan (content kosong). '
+                                      'Cuba lagi atau guna "Generate Syor (Offline)".'}), 502
+        syor = syor_raw.strip()
         return jsonify({'syor': syor})
     except Exception as e:
         return jsonify({'error': f'Gagal panggil AI: {str(e)}'}), 500
