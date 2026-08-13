@@ -361,31 +361,7 @@ def generate_docx(form_data):
         hs.paragraph_format.space_after = Pt(3)
         hs.paragraph_format.line_spacing = 1.15
 
-    # ── Header & Footer (letterhead image) ──
-    header_img_path = _resource_path(os.path.join('static', 'letterhead-header.png'))
-    footer_img_path = _resource_path(os.path.join('static', 'letterhead-footer.png'))
-
-    for section in doc.sections:
-        # Header
-        if os.path.exists(header_img_path):
-            header = section.header
-            header.is_linked_to_previous = False
-            hp = header.paragraphs[0]
-            hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            hp.paragraph_format.space_after = Pt(0)
-            # Content width = page width - left margin - right margin = ~16cm
-            run = hp.add_run()
-            run.add_picture(header_img_path, width=Cm(15.5))
-
-        # Footer
-        if os.path.exists(footer_img_path):
-            footer = section.footer
-            footer.is_linked_to_previous = False
-            fp = footer.paragraphs[0]
-            fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            fp.paragraph_format.space_before = Pt(0)
-            run = fp.add_run()
-            run.add_picture(footer_img_path, width=Cm(15.5))
+    # ── Laporan BPS: TANPA letterhead (ruang header kosong utk cop/tandatangan) ──
 
     # ── Helper functions ──
     def add_heading(text, level=1):
@@ -1378,12 +1354,35 @@ def generate_borang_ulasan(data, output_dir):
     run = p.add_run('A. BUTIR – BUTIR PESAKIT')
     run.bold = True
 
-    doc.add_paragraph(f"1.\tNama\t\t\t\t\t\t: {data['nama']}")
-    doc.add_paragraph(f"2.\tNo. K/P\t\t\t\t\t\t: {data['ic']}")
-    doc.add_paragraph(f"3.\tDiagnosis\t\t\t\t\t: {data['diagnosa']}")
-    doc.add_paragraph(f"4.\tRawatan/ Peralatan\t\t: {data['tdi_rawatan']}")
-    doc.add_paragraph(f"5.\tKos Rawatan / Peralatan (RM) : {data['tdi_kos']}")
-    doc.add_paragraph(f"6.\tJumlah kos yang mampu ditanggung oleh pemohon/waris (RM) : {data['tdi_mampu']}")
+    # Jadual 2 kolom supaya kolon : selari
+    def _add_label_value_row(table, label, value):
+        row = table.add_row().cells
+        lp = row[0].paragraphs[0]
+        lp.paragraph_format.line_spacing = 1.15
+        lp.paragraph_format.space_after = Pt(2)
+        lp.paragraph_format.space_before = Pt(2)
+        lr = lp.add_run(label)
+        lr.font.name = 'Arial'
+        lr.font.size = Pt(11)
+        lp.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        vp = row[1].paragraphs[0]
+        vp.paragraph_format.line_spacing = 1.15
+        vp.paragraph_format.space_after = Pt(2)
+        vp.paragraph_format.space_before = Pt(2)
+        vp.add_run(': ' + str(value)).font.name = 'Arial'
+        vp.runs[0].font.size = Pt(11)
+
+    tbl = doc.add_table(rows=0, cols=2)
+    tbl.autofit = True
+    tbl.columns[0].width = Cm(7.5)
+    tbl.columns[1].width = Cm(10.0)
+    # label align kiri dengan tab-stop supaya label sama panjang
+    _add_label_value_row(tbl, '1.  Nama', data['nama'])
+    _add_label_value_row(tbl, '2.  No. K/P', data['ic'])
+    _add_label_value_row(tbl, '3.  Diagnosis', data['diagnosa'])
+    _add_label_value_row(tbl, '4.  Rawatan/ Peralatan', data['tdi_rawatan'])
+    _add_label_value_row(tbl, '5.  Kos Rawatan / Peralatan (RM)', data['tdi_kos'])
+    _add_label_value_row(tbl, '6.  Jumlah kos yang mampu ditanggung oleh pemohon/waris (RM)', data['tdi_mampu'])
 
     doc.add_paragraph()
 
@@ -1405,10 +1404,16 @@ def generate_borang_ulasan(data, output_dir):
     doc.add_paragraph('Berdasarkan siasatan kami, adalah dicadangkan supaya pesakit ini dibantu untuk mendapatkan bantuan...')
     doc.add_paragraph()
     doc.add_paragraph()
-    doc.add_paragraph(f'\t\tTandatangan Pegawai \t:')
-    doc.add_paragraph(f'\t\tNama Penuh\t:')
-    doc.add_paragraph(f'\t\tCop Jabatan\t:')
-    doc.add_paragraph(f'\t\tTarikh\t: {data["tarikh_tdi"]}')
+
+    # Tandatangan — jadual 2 kolom supaya selari
+    t2 = doc.add_table(rows=0, cols=2)
+    t2.autofit = True
+    t2.columns[0].width = Cm(7.5)
+    t2.columns[1].width = Cm(10.0)
+    _add_label_value_row(t2, 'Tandatangan Pegawai', '')
+    _add_label_value_row(t2, 'Nama Penuh', '')
+    _add_label_value_row(t2, 'Cop Jabatan', '')
+    _add_label_value_row(t2, 'Tarikh', data['tarikh_tdi'])
 
     fpath = os.path.join(output_dir, 'BORANG ULASAN TDI.docx')
     doc.save(fpath)
