@@ -43,7 +43,7 @@ app.config['SECRET_KEY'] = 'bps-secret-kkm-2026'
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.1.0'
+APP_VERSION = '1.1.1'
 
 # Flag: betul ke app ni jalan sebagai EXE PyInstaller?
 # Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).

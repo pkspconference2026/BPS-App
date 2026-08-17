@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "change_log": "v1.1.0: Font Arial 11pt, spacing 1.15, letterhead header/footer (letak gambar sendiri dlm static/), Surat Iringan TDI ada letterhead, Borang Ulasan TDI ayat syor tetap + ruang tulis manual.",
+  "version": "1.1.1",
+  "change_log": "v1.1.1: Betulkan ejaan Terengganu (2 G), favicon BPS di tab browser, cleanup config.txt.",
   "files": [
     {
       "path": "app.py",
@@ -9,6 +9,10 @@
     {
       "path": "templates/index.html",
       "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/templates/index.html"
+    },
+    {
+      "path": "templates/report.html",
+      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/templates/report.html"
     },
     {
       "path": "update_manifest.json",
