@@ -43,7 +43,7 @@ app.config['SECRET_KEY'] = 'bps-secret-kkm-2026'
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.1.1'
+APP_VERSION = '1.2.0'
 
 # Flag: betul ke app ni jalan sebagai EXE PyInstaller?
 # Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).
@@ -77,25 +77,32 @@ def _baca_config():
     return ''
 
 def _baca_config_value(key):
-    """Baca sebarang KEY = value dari config.txt (contoh: UPDATE_URL)."""
+    """Baca sebarang KEY = value dari config.txt (contoh: UPDATE_URL).
+    Guna LAST match supaya edit/manual override di mana-mana baris berkesan."""
     cfg_path = os.path.join(EXE_DIR, 'config.txt')
+    val = ''
     if os.path.exists(cfg_path):
         try:
             with open(cfg_path, encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if line.startswith(key + '=') or line.startswith(key + ' ='):
-                        val = line.split('=', 1)[1].strip().strip('"').strip("'")
-                        if val:
-                            return val
+                        v = line.split('=', 1)[1].strip().strip('"').strip("'")
+                        if v:
+                            val = v
         except Exception:
             pass
-    return ''
+    return val
 
 # URL manifest update — letak di config.txt:
 #   UPDATE_URL = https://raw.githubusercontent.com/<user>/<repo>/main/update_manifest.json
 # Kalau kosong, butang Semak Update akan tunjuk mesej "belum dikonfigurasi".
 UPDATE_URL = _baca_config_value('UPDATE_URL')
+
+# Maklumat hospital & pegawai (untuk surat/dokumen) — kawan boleh tukar di config.txt
+NAMA_HOSPITAL = _baca_config_value('NAMA_HOSPITAL') or 'Hospital Hulu Terengganu'
+NAMA_PEGAWAI = _baca_config_value('NAMA_PEGAWAI') or 'NAMA PEGAWAI'
+NAMA_SISTEM  = _baca_config_value('NAMA_SISTEM') or 'Kementerian Kesihatan Malaysia'
 
 def _resolve_output_base():
     """Tentukan folder output asas mengikut keutamaan:
@@ -186,7 +193,8 @@ def index():
         has_ai=bool(OPENROUTER_API_KEY),
         output_path=OUTPUT_BASE,
         app_version=APP_VERSION,
-        is_dropbox=('Dropbox' in OUTPUT_BASE))
+        is_dropbox=('Dropbox' in OUTPUT_BASE),
+        nama_sistem=NAMA_SISTEM)
 
 # ─────────────────────────────────────────────────
 # Jana laporan
@@ -1324,11 +1332,11 @@ def generate_surat_iringan(data, output_dir):
     doc.add_paragraph()
 
     p = doc.add_paragraph()
-    run = p.add_run(f'({data["nama_pk"] if data["nama_pk"] else "MOHD HAFIZ BIN YAHYA"})')
+    run = p.add_run(f'({data["nama_pk"] if data["nama_pk"] else NAMA_PEGAWAI})')
     run.bold = True
     doc.add_paragraph('Pegawai Kerja Sosial Perubatan')
     doc.add_paragraph('b.p Pengarah')
-    doc.add_paragraph('Hospital Hulu Terengganu')
+    doc.add_paragraph(NAMA_HOSPITAL)
 
     fpath = os.path.join(output_dir, 'SURAT IRINGAN.docx')
     doc.save(fpath)
