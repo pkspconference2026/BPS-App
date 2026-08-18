@@ -43,7 +43,7 @@ app.config['SECRET_KEY'] = 'bps-secret-kkm-2026'
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.2.0'
+APP_VERSION = '1.2.1'
 
 # Flag: betul ke app ni jalan sebagai EXE PyInstaller?
 # Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).
@@ -1471,7 +1471,15 @@ def generate_tdi():
     os.makedirs(patient_dir, exist_ok=True)
 
     # Auto-tetapkan rujukan jika kosong
-    data['rujukan'] = request.form.get('rujukan', '').strip() or f"HHT/UKSP/MSW15/{datetime.now().year}"
+    # Prioriti: input manual Rujukan TDI > No. Rujukan Fail (UKSP/HHT/{fail}) > fallback
+    rujukan_input = request.form.get('rujukan', '').strip()
+    rujukan_fail = request.form.get('rujukan_fail', '').strip()
+    if rujukan_input:
+        data['rujukan'] = rujukan_input
+    elif rujukan_fail:
+        data['rujukan'] = f"UKSP/HHT/{rujukan_fail}"
+    else:
+        data['rujukan'] = f"HHT/UKSP/MSW15/{datetime.now().year}"
     data['tarikh_tdi'] = request.form.get('tarikh_tdi', '').strip() or _format_tarikh(datetime.now())
 
     # Field TDI
