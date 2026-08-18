@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "change_log": "v1.2.0: Configurable NAMA_HOSPITAL & NAMA_PEGAWAI (kawan tukar di config.txt), header web guna Kementerian Kesihatan Malaysia (configurable via NAMA_SISTEM), panduan tukar letterhead.",
+  "version": "1.2.1",
+  "change_log": "v1.2.1: Surat Iringan TDI auto-guna No. Rujukan Fail — Ruj. Kami: UKSP/HHT/MSW37/26. Placeholder form ditukar.",
   "files": [
     {
       "path": "app.py",
@@ -9,10 +9,6 @@
     {
       "path": "templates/index.html",
       "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/templates/index.html"
-    },
-    {
-      "path": "update_manifest.json",
-      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/update_manifest.json"
     }
   ]
 }
