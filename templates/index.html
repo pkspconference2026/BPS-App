@@ -70,6 +70,11 @@ table.ahli .btn-remove { background: #ef5350; color: #fff; border: none; border-
         📂 <b>Laporan disimpan secara tempatan</b>
     {% endif %}
     <code style="background:#f5f5f5;padding:2px 8px;border-radius:4px;font-size:11px;word-break:break-all;">{{ output_path }}</code>
+    {% if has_ai %}
+    <span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;" title="AI DeepSeek aktif — butang Generate Syor (AI) boleh diguna">🤖 AI Aktif</span>
+    {% else %}
+    <span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:help;" title="AI tak tersedia — OPENROUTER_API_KEY tiada. Guna butang Generate Syor (Offline) sebagai ganti.">🤖 AI Tak Aktif</span>
+    {% endif %}
     <span style="margin-left:auto;font-size:11px;color:#666;">(Tukar di config.txt)</span>
 </div>
 <form id="bpsForm" method="POST" action="/generate" onsubmit="return validateForm()">

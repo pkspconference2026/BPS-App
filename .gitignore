@@ -24,4 +24,6 @@ static/letterhead*.png
 
 # PyInstaller build artifacts & binary output — JANGAN push (besar)
 build/
+dist/letterhead-originals/
 dist/
+letterhead-originals/
