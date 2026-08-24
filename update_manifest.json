@@ -1,6 +1,6 @@
 {
-  "version": "1.2.1",
-  "change_log": "v1.2.1: Surat Iringan TDI auto-guna No. Rujukan Fail — Ruj. Kami: UKSP/HHT/MSW37/26. Placeholder form ditukar.",
+  "version": "1.2.2",
+  "change_log": "v1.2.2: Letterhead di-compress (85% lebih ringan), penunjuk status AI dalam banner (Aktif/Tak Aktif), buang fail backup lama.",
   "files": [
     {
       "path": "app.py",
