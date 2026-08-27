@@ -1,6 +1,6 @@
 {
-  "version": "1.2.4",
-  "change_log": "v1.2.4: Tambah validasi No. Kad Pengenalan Malaysia (12 digit, tarikh valid, kod negeri).",
+  "version": "1.2.5",
+  "change_log": "v1.2.5: Perbaiki draft save/load — restore jadual keluarga serumah/berasingan, dropdown, dan checkbox utiliti.",
   "files": [
     {
       "path": "app.py",
@@ -9,6 +9,10 @@
     {
       "path": "templates/index.html",
       "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/templates/index.html"
+    },
+    {
+      "path": "Jalan BPS.vbs",
+      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/Jalan%20BPS.vbs"
     }
   ]
 }

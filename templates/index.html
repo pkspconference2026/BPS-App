@@ -598,24 +598,86 @@ function muatDraft() {
         });
     });
 }
+function renderKeluarga(prefix, ahliList) {
+    const tbody = document.querySelector(`#table${prefix} tbody`);
+    tbody.innerHTML = '';
+    if (!Array.isArray(ahliList)) return;
+    ahliList.forEach(a => {
+        addRow(prefix);
+        const lastRow = tbody.lastElementChild;
+        if (lastRow) {
+            const jantina = (a.jantina || '').toUpperCase();
+            lastRow.querySelector('.f-nama').value = a.nama || '';
+            lastRow.querySelector('.f-jantina').value = (jantina === 'PEREMPUAN' || jantina === 'P') ? 'P' : 'L';
+            lastRow.querySelector('.f-umur').value = a.umur || '';
+            lastRow.querySelector('.f-status').value = a.status || 'Bujang';
+            lastRow.querySelector('.f-pertalian').value = a.pertalian || '';
+            lastRow.querySelector('.f-pekerjaan').value = a.pekerjaan || '';
+            lastRow.querySelector('.f-pendapatan').value = a.pendapatan || '';
+        }
+    });
+    kemaskiniBil(prefix);
+}
+
+function restoreSelects(data) {
+    document.querySelectorAll('select').forEach(sel => {
+        if (data[sel.name] !== undefined) {
+            const val = data[sel.name];
+            const opt = Array.from(sel.options).find(o => o.value === val);
+            if (opt) sel.value = val;
+        }
+    });
+}
+
+function restoreCheckboxes(data) {
+    // Uncheck semua utiliti dulu
+    document.querySelectorAll('input[type="checkbox"][name="utiliti"]').forEach(cb => cb.checked = false);
+    if (data.utiliti) {
+        const vals = data.utiliti.split(',').map(s => s.trim()).filter(Boolean);
+        document.querySelectorAll('input[type="checkbox"][name="utiliti"]').forEach(cb => {
+            if (vals.includes(cb.value)) cb.checked = true;
+        });
+    }
+}
+
 function loadDraft(key) {
     fetch('/load_draft/' + encodeURIComponent(key))
     .then(r => r.json())
     .then(data => {
+        // 1. Reset jadual keluarga dulu
+        document.querySelector('#tableSerumah tbody').innerHTML = '';
+        document.querySelector('#tableBerasingan tbody').innerHTML = '';
+
+        // 2. Isi semua input / textarea biasa (kecuali hidden keluarga)
         Object.entries(data).forEach(([k,v]) => {
             const el = document.querySelector(`[name="${k}"]`);
-            if (el && !k.includes('keluarga_') && k !== 'draft_key') {
-                if (el.type === 'checkbox') {
-                    // skip checkboxes for now — too complex to restore
-                } else {
-                    el.value = v || '';
-                }
+            if (el && !k.includes('keluarga_') && k !== 'draft_key' && el.type !== 'checkbox' && el.tagName !== 'SELECT') {
+                el.value = (v === undefined || v === null) ? '' : v;
             }
         });
+
+        // 3. Restore dropdown/select
+        restoreSelects(data);
+
+        // 4. Restore utiliti checkbox
+        restoreCheckboxes(data);
+
+        // 5. Restore jadual keluarga
+        let serumah = [];
+        let berasingan = [];
+        try { serumah = JSON.parse(data.keluarga_serumah_json || '[]'); } catch(e) { serumah = []; }
+        try { berasingan = JSON.parse(data.keluarga_berasingan_json || '[]'); } catch(e) { berasingan = []; }
+        renderKeluarga('Serumah', serumah);
+        renderKeluarga('Berasingan', berasingan);
+
+        // 6. Sync TDI fields
+        syncTDIFromSection1();
+
         document.getElementById('statusMessage').className = 'status info';
         document.getElementById('statusMessage').textContent = '✅ Draft "' + key + '" berjaya dimuatkan!';
         document.getElementById('statusMessage').style.display = 'block';
         document.getElementById('draftArea').style.display = 'none';
+
         // refresh calculations
         kiraPendapatan(); kiraPerbelanjaan(); kiraCaruman(); kiraTabungan(); kiraHarta();
     });

@@ -11,7 +11,7 @@ Set objFSO = CreateObject("Scripting.FileSystemObject")
 appDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
 
 ' Jalan pythonw.exe (tanpa tingkap)
-objShell.Run """" & appDir & "\.venv\Scripts\pythonw.exe"" """ & appDir & "\app.py""", 0, False
+objShell.Run "\"" & appDir & "\.venv\Scripts\pythonw.exe\" \"" & appDir & "\app.py\"", 0, False
 
 ' Tunggu 3 saat untuk server start, pastu buka browser
 WScript.Sleep 3000

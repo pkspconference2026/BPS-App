@@ -44,7 +44,7 @@ app.config['SECRET_KEY'] = os.environ.get('BPS_SECRET_KEY', secrets.token_hex(32
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.2.4'
+APP_VERSION = '1.2.5'
 
 # Flag: betul ke app ni jalan sebagai EXE PyInstaller?
 # Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).
@@ -1562,6 +1562,10 @@ DRAFT_FILE = os.path.join(DROPBOX_APP, 'drafts.json')
 @app.route('/save_draft', methods=['POST'])
 def save_draft():
     data = request.form.to_dict()
+    # Gabungkan multi-value fields (checkboxes) jadi string comma-separated
+    utiliti_list = request.form.getlist('utiliti')
+    if utiliti_list:
+        data['utiliti'] = ', '.join(utiliti_list)
     drafts = {}
     if os.path.exists(DRAFT_FILE):
         with open(DRAFT_FILE, 'r') as f:
