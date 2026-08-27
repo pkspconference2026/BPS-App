@@ -8,9 +8,10 @@ Jalan: python app.py, then buka http://localhost:5000
 import os
 import sys
 import json
+import secrets
 import requests
 from datetime import datetime
-from io import BytesIO
+from packaging import version
 
 def _resource_path(rel=''):
     """Cari fail sumber bila jalan sbg .py biasa ATAU .exe (PyInstaller _MEIPASS).
@@ -27,7 +28,7 @@ def _resource_path(rel=''):
 
 from flask import Flask, render_template, request, send_file, jsonify
 from docx import Document
-from docx.shared import Pt, Inches, Cm, RGBColor
+from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 # WeasyPrint optional — fallback to print-friendly HTML
@@ -38,12 +39,12 @@ except (ImportError, OSError):
     HAVE_WEASYPRINT = False
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'bps-secret-kkm-2026'
+app.config['SECRET_KEY'] = os.environ.get('BPS_SECRET_KEY', secrets.token_hex(32))
 
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.2.2'
+APP_VERSION = '1.2.3'
 
 # Flag: betul ke app ni jalan sebagai EXE PyInstaller?
 # Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).
@@ -1577,10 +1578,15 @@ def check_update():
     files = manifest.get('files', [])
     change_log = manifest.get('change_log', 'Tiada catatan perubahan.')
 
+    try:
+        has_update = version.parse(latest) > version.parse(APP_VERSION)
+    except Exception:
+        has_update = latest > APP_VERSION  # fallback jika format pelik
+
     return jsonify({
         'current': APP_VERSION,
         'latest': latest,
-        'has_update': latest > APP_VERSION,
+        'has_update': has_update,
         'files_count': len(files),
         'files': [f['path'] for f in files],
         'change_log': change_log
@@ -1602,7 +1608,11 @@ def apply_update():
         return jsonify({'error': f'Gagal muat turun manifest: {e}'})
 
     latest = manifest.get('version', '')
-    if latest <= APP_VERSION:
+    try:
+        has_update = version.parse(latest) > version.parse(APP_VERSION)
+    except Exception:
+        has_update = latest > APP_VERSION
+    if not has_update:
         return jsonify({'error': 'Tiada update baru.', 'current': APP_VERSION, 'latest': latest})
 
     hasil = []

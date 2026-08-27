@@ -68,7 +68,7 @@ if "%_PYTHON%"=="uv run python" (
     uv pip install --system flask python-docx fpdf2 requests -q
 ) else (
     .venv\Scripts\python -m pip install --upgrade pip -q
-    .venv\Scripts\pip install flask python-docx fpdf2 requests -q
+    .venv\Scripts\pip install flask python-docx fpdf2 requests packaging -q
 )
 echo [OK] Packages installed.
 

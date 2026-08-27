@@ -63,7 +63,7 @@ if errorlevel 1 (
             set "KEEP_OPEN=1"
             goto :END_PAUSE
         )
-        uv.exe pip install --python .venv\Scripts\python.exe flask python-docx fpdf2 requests
+        uv.exe pip install --python .venv\Scripts\python.exe flask python-docx fpdf2 requests packaging
         if errorlevel 1 (
             echo    ❌ Gagal pasang dependencies
             set "KEEP_OPEN=1"
@@ -82,7 +82,7 @@ if errorlevel 1 (
         set "KEEP_OPEN=1"
         goto :END_PAUSE
     )
-    .venv\Scripts\python -m pip install --quiet flask python-docx fpdf2 requests
+    .venv\Scripts\python -m pip install --quiet flask python-docx fpdf2 requests packaging
     if errorlevel 1 (
         echo    ❌ Gagal pasang dependencies
         set "KEEP_OPEN=1"

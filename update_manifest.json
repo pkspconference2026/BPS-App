@@ -1,14 +1,18 @@
 {
-  "version": "1.2.2",
-  "change_log": "v1.2.2: Letterhead di-compress (85% lebih ringan), penunjuk status AI dalam banner (Aktif/Tak Aktif), buang fail backup lama.",
+  "version": "1.2.3",
+  "change_log": "v1.2.3: Keselamatan SECRET_KEY random, fix perbandingan versi, Stop BPS.vbs lebih selamat, buang import tak guna.",
   "files": [
     {
       "path": "app.py",
       "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/app.py"
     },
     {
-      "path": "templates/index.html",
-      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/templates/index.html"
+      "path": "setup.bat",
+      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/setup.bat"
+    },
+    {
+      "path": "Stop BPS.vbs",
+      "url": "https://raw.githubusercontent.com/pkspconference2026/BPS-App/main/Stop%20BPS.vbs"
     }
   ]
 }
