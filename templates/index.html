@@ -622,19 +622,71 @@ function loadDraft(key) {
 }
 
 // ════════════════════════════════════
+// VALIDASI IC MALAYSIA
+// ════════════════════════════════════
+function validateIC(ic) {
+    const digits = ic.replace(/\D/g, '');
+    if (!ic.trim()) return {ok: true}; // IC kosong dibenarkan (tak wajib)
+    if (digits.length !== 12) return {ok: false, msg: `IC mesti 12 digit (sekarang ${digits.length} digit).`};
+
+    const yy = parseInt(digits.slice(0,2), 10);
+    const mm = parseInt(digits.slice(2,4), 10);
+    const dd = parseInt(digits.slice(4,6), 10);
+    const place = parseInt(digits.slice(6,8), 10);
+
+    if (mm < 1 || mm > 12) return {ok: false, msg: `Bulan dalam IC tidak sah (${String(mm).padStart(2,'0')}).`};
+    if (dd < 1 || dd > 31) return {ok: false, msg: `Hari dalam IC tidak sah (${String(dd).padStart(2,'0')}).`};
+
+    const fullYear = yy <= 24 ? 2000 + yy : 1900 + yy;
+    const test = new Date(fullYear, mm - 1, dd);
+    if (test.getFullYear() !== fullYear || test.getMonth() !== mm - 1 || test.getDate() !== dd) {
+        return {ok: false, msg: `Tarikh lahir dalam IC tidak sah (${String(dd).padStart(2,'0')}/${String(mm).padStart(2,'0')}/${fullYear}).`};
+    }
+    if (place < 1 || place > 59) return {ok: false, msg: `Kod negeri tempat lahir dalam IC tidak sah (${String(place).padStart(2,'0')}).`};
+
+    return {ok: true, cleaned: digits};
+}
+
+// ════════════════════════════════════
 // VALIDASI & HANTAR
 // ════════════════════════════════════
 function validateForm() {
     simpanDataKeluarga();
+    const status = document.getElementById('statusMessage');
+    status.style.display = 'none';
+
     const nama = document.querySelector('[name="nama"]').value.trim();
     if (!nama) {
-        document.getElementById('statusMessage').className = 'status err';
-        document.getElementById('statusMessage').textContent = '❌ Sila isi Nama Pesakit.';
-        document.getElementById('statusMessage').style.display = 'block';
+        status.className = 'status err';
+        status.textContent = '❌ Sila isi Nama Pesakit.';
+        status.style.display = 'block';
         return false;
     }
+
+    const icInput = document.querySelector('[name="ic"]');
+    const icCheck = validateIC(icInput.value);
+    if (!icCheck.ok) {
+        status.className = 'status err';
+        status.textContent = '❌ ' + icCheck.msg;
+        icInput.focus();
+        status.style.display = 'block';
+        return false;
+    }
+    // Optional: auto-format to 12 digits if user typed dashes/spaces
+    if (icCheck.cleaned) icInput.value = icCheck.cleaned;
+
     return true;
 }
+
+// Auto-format & validate IC as user types
+function onICInput(input) {
+    const digits = input.value.replace(/\D/g, '');
+    if (digits.length > 12) input.value = digits.slice(0, 12);
+    // Only auto-fill DOB if first 6 digits form valid date
+    if (digits.length >= 6) autoIsiDariIC(input);
+}
+document.querySelector('[name="ic"]').addEventListener('input', function() { onICInput(this); });
+
 
 // ════════════════════════════════════
 // AUTO-ISI TDI dari Seksyen 1

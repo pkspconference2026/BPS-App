@@ -44,7 +44,7 @@ app.config['SECRET_KEY'] = os.environ.get('BPS_SECRET_KEY', secrets.token_hex(32
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.2.3'
+APP_VERSION = '1.2.4'
 
 # Flag: betul ke app ni jalan sebagai EXE PyInstaller?
 # Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).
@@ -205,10 +205,62 @@ def generate():
     data = request.form
     fmt = data.get('format', 'docx')  # docx / pdf
 
+    # Validasi IC
+    ic_raw = data.get('ic', '').strip()
+    valid_ic, ic_error, _ = _validate_ic(ic_raw)
+    if ic_raw and not valid_ic:
+        return jsonify({'error': ic_error}), 400
+
     if fmt == 'docx':
         return generate_docx(data)
     else:
         return generate_pdf(data)
+
+
+def _validate_ic(ic_raw):
+    """Validate No. Kad Pengenalan Malaysia.
+    Format: 12 digit numeric (YYMMDD-BB-NNNN, dash optional).
+    Return: (is_valid: bool, error_message: str, cleaned_12digit: str)
+    """
+    if not ic_raw:
+        return False, 'No. Kad Pengenalan kosong.', ''
+
+    # Strip semua non-digit
+    digits = ''.join(ch for ch in ic_raw if ch.isdigit())
+    if len(digits) != 12:
+        return False, f'No. Kad Pengenalan mesti 12 digit (anda masukkan {len(digits)} digit).', digits
+
+    yy = int(digits[0:2])
+    mm = int(digits[2:4])
+    dd = int(digits[4:6])
+    place = int(digits[6:8])
+    serial = digits[8:12]
+
+    # Bulan mesti 01-12
+    if mm < 1 or mm > 12:
+        return False, f'Bulan dalam IC tidak sah ({mm:02d}).', digits
+
+    # Hari mesti 01-31 (ikut bulan)
+    if dd < 1 or dd > 31:
+        return False, f'Hari dalam IC tidak sah ({dd:02d}).', digits
+
+    # Pastikan tarikh wujud dalam kalendar
+    full_year = 2000 + yy if yy <= 24 else 1900 + yy
+    try:
+        from datetime import date
+        date(full_year, mm, dd)
+    except ValueError:
+        return False, f'Tarikh lahir dalam IC tidak sah ({dd:02d}/{mm:02d}/{full_year}).', digits
+
+    # Kod negeri BB — 01-59 umum; 00 & 70-99 kecil kemungkinan
+    if place < 1 or place > 59:
+        return False, f'Kod negeri tempat lahir dalam IC tidak sah ({place:02d}).', digits
+
+    # Serial number 4 digit sudah pasti oleh slicing
+    if not serial.isdigit():
+        return False, 'Nombor siri akhir IC tidak sah.', digits
+
+    return True, '', digits
 
 
 def prepare_data(d):
