@@ -44,7 +44,7 @@ app.config['SECRET_KEY'] = os.environ.get('BPS_SECRET_KEY', secrets.token_hex(32
 # ── Versi App & Update ──
 # Naikkan APP_VERSION bila ada perubahan. Update diagihkan guna manifest.json
 # (lihat fungsi /check_update dan /apply_update di bawah).
-APP_VERSION = '1.2.5'
+APP_VERSION = '1.2.6'
 
 # Flag: betul ke app ni jalan sebagai EXE PyInstaller?
 # Dalam EXE, auto-update dimatikan (fail sumber read-only dalam _MEIPASS).
@@ -149,18 +149,43 @@ for d in [DROPBOX_BPS, DROPBOX_TDI, DROPBOX_APP]:
     except Exception:
         pass
 
-# ── OpenRouter AI Key ──
-# Baca dari .env Hermes
+# ── AI (Model + Endpoint) ──
+# Boleh tukar SEMUA di config.txt tanpa edit kod ni:
+#   AI_BASE_URL = https://openrouter.ai/api/v1     (endpoint)
+#   AI_MODEL    = deepseek/deepseek-v4-flash       (nama model)
+#   AI_KEY_ENV  = OPENROUTER_API_KEY               (nama key dalam .env Hermes)
+#                  boleh senarai dipisah koma — guna yang pertama JUMPA.
+# Key dibaca dari .env Hermes (bukan dari config.txt, supaya tak bocor).
+AI_BASE_URL = (_baca_config_value('AI_BASE_URL') or 'https://openrouter.ai/api/v1').rstrip('/')
+AI_MODEL    = _baca_config_value('AI_MODEL') or 'deepseek/deepseek-v4-flash'
+AI_KEY_ENV  = _baca_config_value('AI_KEY_ENV') or 'OPENROUTER_API_KEY'
+
 HERMES_ENV = os.path.expanduser('~/AppData/Local/hermes/.env')
-OPENROUTER_API_KEY = ''
+_ENV_VALUES = {}
 if os.path.exists(HERMES_ENV):
-    with open(HERMES_ENV) as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith('OPENROUTER_API_KEY=') and '***' not in line:
-                OPENROUTER_API_KEY = line.split('=', 1)[1].strip()
-                break
-AI_MODEL = 'deepseek/deepseek-v4-flash'
+    try:
+        with open(HERMES_ENV, encoding='utf-8') as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if not _line or _line.startswith('#') or '=' not in _line:
+                    continue
+                _k, _v = _line.split('=', 1)
+                _v = _v.strip().strip('"').strip("'")
+                if _v and '***' not in _v:
+                    _ENV_VALUES[_k.strip()] = _v
+    except Exception:
+        pass
+
+AI_API_KEY = ''
+AI_KEY_NAME = ''
+for _nama in [n.strip() for n in AI_KEY_ENV.split(',') if n.strip()]:
+    if _ENV_VALUES.get(_nama):
+        AI_API_KEY = _ENV_VALUES[_nama]
+        AI_KEY_NAME = _nama
+        break
+
+# Alias nama lama — kod lain masih rujuk OPENROUTER_API_KEY
+OPENROUTER_API_KEY = AI_API_KEY
 
 # ─────────────────────────────────────────────────
 # Data rujukan (dropdown)
@@ -192,6 +217,9 @@ def index():
         agensi_bantuan=AGENSI_BANTUAN,
         today=datetime.now().strftime('%d/%m/%Y'),
         has_ai=bool(OPENROUTER_API_KEY),
+        ai_model=AI_MODEL,
+        ai_base_url=AI_BASE_URL,
+        ai_key_env=AI_KEY_ENV,
         output_path=OUTPUT_BASE,
         app_version=APP_VERSION,
         is_dropbox=('Dropbox' in OUTPUT_BASE),
@@ -1167,7 +1195,8 @@ def generate_syor_ai():
     user_text = request.form.get('syor', '').strip()
 
     if not OPENROUTER_API_KEY:
-        return jsonify({'error': 'Tiada sambungan AI. PC ini mungkin offline atau tiada API key. Guna butang "Generate Syor (Offline)" untuk template.'}), 503
+        return jsonify({'error': f'Tiada sambungan AI — key "{AI_KEY_ENV}" tak jumpa dalam .env Hermes. '
+                                  f'Guna butang "Generate Syor (Offline)".'}), 503
 
     # Kumpul semua maklumat untuk prompt
     try:
@@ -1249,10 +1278,12 @@ Tulis syor yang:
 5. Akhiri dengan pelan tindakan / rujukan
 6. JANGAN cipta maklumat yang tidak ada dalam data di atas
 7. Jangan gunakan bullet point — tulis dalam bentuk perenggan naratif
+8. JANGAN tulis mukadimah/ulasan (contoh: "Berikut adalah laporan...") — mula terus dengan ayat laporan
+9. JANGAN tulis apa-apa di luar perenggan laporan (tiada nota, tiada tanda "---")
 """
 
     headers = {
-        'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+        'Authorization': f'Bearer {AI_API_KEY}',
         'Content-Type': 'application/json',
         'HTTP-Referer': 'http://localhost:5000',
         'X-Title': 'BPS Report Generator'
@@ -1270,7 +1301,7 @@ Tulis syor yang:
     }
 
     try:
-        resp = requests.post('https://openrouter.ai/api/v1/chat/completions',
+        resp = requests.post(f'{AI_BASE_URL}/chat/completions',
                              headers=headers, json=payload, timeout=60)
         resp.raise_for_status()
         result = resp.json()
@@ -1284,7 +1315,14 @@ Tulis syor yang:
         syor = syor_raw.strip()
         return jsonify({'syor': syor})
     except Exception as e:
-        return jsonify({'error': f'Gagal panggil AI: {str(e)}'}), 500
+        err = str(e)
+        if '401' in err or 'Unauthorized' in err or 'expired' in err.lower():
+            return jsonify({'error': 'API key AI tak sah atau dah expired. '
+                                      'Tukar/pasang key baru, atau guna "Generate Syor (Offline)".'}), 500
+        if '404' in err or 'model' in err.lower() and 'not' in err.lower():
+            return jsonify({'error': f'Model "{AI_MODEL}" tak diterima oleh endpoint '
+                                      f'{AI_BASE_URL}. Semak AI_MODEL dalam config.txt.'}), 500
+        return jsonify({'error': f'Gagal panggil AI: {err}'}), 500
 
 
 # ─────────────────────────────────────────────────

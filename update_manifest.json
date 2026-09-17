@@ -1,6 +1,6 @@
 {
-  "version": "1.2.5",
-  "change_log": "v1.2.5: Perbaiki draft save/load — restore jadual keluarga serumah/berasingan, dropdown, dan checkbox utiliti.",
+  "version": "1.2.6",
+  "change_log": "v1.2.6: AI kini boleh ditukar di config.txt (AI_BASE_URL, AI_MODEL, AI_KEY_ENV) tanpa edit kod. Badge header tunjuk model aktif, mesej ralat AI lebih jelas (key expired / model tak sah), dan syor AI lebih bersih (tiada mukadimah).",
   "files": [
     {
       "path": "app.py",
