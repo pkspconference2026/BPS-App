@@ -593,9 +593,35 @@ function muatDraft() {
             const div = document.createElement('div');
             div.className = 'draft-item';
             div.innerHTML = `<span><strong>${k.nama}</strong> — ${k.tarikh || '-'}</span>
-                <button onclick="loadDraft('${k.key}')">Muat</button>`;
+                <span>
+                    <button onclick="loadDraft('${k.key.replace(/'/g, '\\\'')}')">Muat</button>
+                    <button onclick="hapusDraft('${k.key.replace(/'/g, '\\\'')}')" style="background:#c62828;" title="Padam draft ini">Hapus</button>
+                </span>`;
             list.appendChild(div);
         });
+    });
+}
+function hapusDraft(key) {
+    if (!confirm('Padam draft "' + key + '"?')) return;
+    fetch('/delete_draft/' + encodeURIComponent(key), {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+        const msg = document.getElementById('statusMessage');
+        if (d.ok) {
+            msg.className = 'status ok';
+            msg.textContent = '🗑️ Draft "' + d.nama + '" telah dipadam.';
+            muatDraft();  // refresh senarai
+        } else {
+            msg.className = 'status err';
+            msg.textContent = 'Gagal padam: ' + (d.error || 'rualat');
+        }
+        msg.style.display = 'block';
+    })
+    .catch(() => {
+        const msg = document.getElementById('statusMessage');
+        msg.className = 'status err';
+        msg.textContent = 'Gagal padam draft.';
+        msg.style.display = 'block';
     });
 }
 function renderKeluarga(prefix, ahliList) {

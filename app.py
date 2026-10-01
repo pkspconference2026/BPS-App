@@ -1634,6 +1634,20 @@ def load_draft(key):
         return jsonify(data)
     return jsonify({})
 
+@app.route('/delete_draft/<key>', methods=['POST'])
+def delete_draft(key):
+    if not os.path.exists(DRAFT_FILE):
+        return jsonify({'ok': False, 'error': 'Tiada fail draft.'}), 404
+    with open(DRAFT_FILE, 'r') as f:
+        drafts = json.load(f)
+    if key not in drafts:
+        return jsonify({'ok': False, 'error': 'Draft tidak jumpa.'}), 404
+    nama = drafts[key].get('nama', key)
+    del drafts[key]
+    with open(DRAFT_FILE, 'w') as f:
+        json.dump(drafts, f, indent=2)
+    return jsonify({'ok': True, 'key': key, 'nama': nama})
+
 
 # ─────────────────────────────────────────────────
 # Auto-Update via manifest.json
